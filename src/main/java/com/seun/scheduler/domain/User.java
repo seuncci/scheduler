@@ -1,5 +1,6 @@
 package com.seun.scheduler.domain;
 
+import com.seun.scheduler.dto.UpdateUserRequest;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -52,5 +53,18 @@ public class User {
 
     public void updateLastLoginTime() {
         this.lastLoginTime = LocalDateTime.now();
+    }
+
+    public void updateProfileImage(String profileImage) {
+        this.profileImage = profileImage;
+    }
+
+    public void updatePassword(String password) {
+        this.password = password;
+    }
+
+    public void updateUserProfile(UpdateUserRequest request) {
+        name = request.getName();
+        email = request.getEmail();
     }
 }

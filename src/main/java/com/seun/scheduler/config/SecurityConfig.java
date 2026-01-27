@@ -1,7 +1,9 @@
 package com.seun.scheduler.config;
 
+import com.seun.scheduler.security.JwtAuthorizationFilter;
 import com.seun.scheduler.security.JwtFilter;
 import com.seun.scheduler.security.JwtUtil;
+import com.seun.scheduler.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,6 +19,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class SecurityConfig {
     private final JwtUtil jwtUtil;
+    private final UserService userService;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -27,17 +30,20 @@ public class SecurityConfig {
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/users/login", "/users/join", "/h2-console/**").permitAll()
+                        .requestMatchers("/users/login", "/users/join", "/h2-console/**", "/error").permitAll()
                         .anyRequest().authenticated())
                 .headers(headers -> headers
                         .frameOptions(frame -> frame.sameOrigin()))
-                .addFilterBefore(new JwtFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(new JwtAuthorizationFilter(jwtUtil, userService),
+                        UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
-
+    /*
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
+
+     */
 }
