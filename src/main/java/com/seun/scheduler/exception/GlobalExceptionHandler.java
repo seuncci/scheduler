@@ -10,10 +10,10 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<CommonResponse> handlevalidationException(MethodArgumentNotValidException ex) {
+    public ResponseEntity<CommonResponse<Void>> handlevalidationException(MethodArgumentNotValidException ex) {
         String errorMessage = ex.getBindingResult().getAllErrors().get(0).getDefaultMessage();
 
-        CommonResponse response = CommonResponse.builder()
+        CommonResponse<Void> response = CommonResponse.<Void>builder()
                 .status(HttpStatus.BAD_REQUEST.value())
                 .code(HttpStatus.BAD_REQUEST.name())
                 .message(errorMessage)
@@ -23,8 +23,8 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<CommonResponse> handleIllegalArgumentException(IllegalArgumentException ex) {
-        CommonResponse response = CommonResponse.builder()
+    public ResponseEntity<CommonResponse<Void>> handleIllegalArgumentException(IllegalArgumentException ex) {
+        CommonResponse<Void> response = CommonResponse.<Void>builder()
                 .status(HttpStatus.BAD_REQUEST.value())
                 .code(HttpStatus.BAD_REQUEST.name())
                 .message(ex.getMessage())

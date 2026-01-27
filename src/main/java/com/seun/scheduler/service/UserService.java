@@ -107,7 +107,7 @@ public class UserService implements UserDetailsService {
     @Transactional
     public ResponseEntity<CommonResponse<UserProfileResponse>> updateUser(String userId, UpdateUserRequest request, MultipartFile image) throws IOException {
         User user = userRepository.findByUserId(userId).orElseThrow(
-                () -> new IllegalArgumentException("사용자를 찾을 수 없습니다.")
+                () -> new IllegalArgumentException("유저를 찾을 수 없습니다.")
         );
 
         // 비밀번호 변경 시
@@ -127,16 +127,13 @@ public class UserService implements UserDetailsService {
             String fileName = UUID.randomUUID().toString() + "_" + image.getOriginalFilename();
             String savePath = System.getProperty("user.dir") + "/src/main/resources/static/user/";
 
-            if (!image.isEmpty()) {
-                // 이미 프로필 이미지가 저장된 경우
-                if (user.getProfileImage() != null) {
-                    File file = new File(savePath + user.getProfileImage());
-                    boolean result = file.delete();
-                }
-                // file upload
-                image.transferTo(new File(savePath + fileName));
-                user.updateProfileImage(fileName);
+            if (user.getProfileImage() != null) {
+                File file = new File(savePath + user.getProfileImage());
+                boolean result = file.delete();
             }
+            // file upload
+            image.transferTo(new File(savePath + fileName));
+            user.updateProfileImage(fileName);
         }
 
         user.updateUserProfile(request);
