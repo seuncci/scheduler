@@ -6,18 +6,21 @@ import com.seun.scheduler.domain.User;
 import com.seun.scheduler.domain.UserRole;
 import com.seun.scheduler.dto.CommonResponse;
 import com.seun.scheduler.dto.GroupCreateRequest;
+import com.seun.scheduler.dto.GroupResponse;
 import com.seun.scheduler.repository.GroupRepository;
 import com.seun.scheduler.repository.GroupUserRepository;
 import com.seun.scheduler.repository.UserRepository;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -62,6 +65,36 @@ public class GroupService {
                 .status(HttpStatus.OK.value())
                 .code(HttpStatus.OK.name())
                 .message("success")
+                .build();
+
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @Transactional(readOnly = true)
+    public ResponseEntity<CommonResponse<List<GroupResponse>>> getMyGroupList (String userId) {
+
+        User user = userRepository.findByUserId(userId).orElseThrow(
+                () -> new IllegalArgumentException("유저를 찾을 수 없습니다.")
+        );
+
+        List<GroupUser> groups = groupUserRepository.findAllByUserIdWithGroup(userId);
+        List<GroupResponse> responses = new ArrayList<>();
+
+        for (GroupUser gu : groups) {
+            responses.add(
+                GroupResponse.builder()
+                        .groupId(gu.getGroup().getId())
+                        .groupImage(gu.getGroup().getGroupImage())
+                        .build()
+            );
+
+        }
+
+        CommonResponse<List<GroupResponse>> response = CommonResponse.<List<GroupResponse>>builder()
+                .status(HttpStatus.OK.value())
+                .code(HttpStatus.OK.name())
+                .message("조회 성공")
+                .data(responses)
                 .build();
 
         return ResponseEntity.status(HttpStatus.OK).body(response);
