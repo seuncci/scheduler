@@ -4,9 +4,7 @@ import com.seun.scheduler.domain.Group;
 import com.seun.scheduler.domain.GroupUser;
 import com.seun.scheduler.domain.User;
 import com.seun.scheduler.domain.UserRole;
-import com.seun.scheduler.dto.CommonResponse;
-import com.seun.scheduler.dto.GroupCreateRequest;
-import com.seun.scheduler.dto.GroupResponse;
+import com.seun.scheduler.dto.*;
 import com.seun.scheduler.repository.GroupRepository;
 import com.seun.scheduler.repository.GroupUserRepository;
 import com.seun.scheduler.repository.UserRepository;
@@ -19,6 +17,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -98,5 +99,69 @@ public class GroupService {
                 .build();
 
         return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @Transactional(readOnly = true)
+    public GroupDetailResponse getGroupDetail(long groupId) {
+        // 그룹이 존재하는지 확인 및 그룹 정보 가져오기
+        Group group = groupRepository.findById(groupId).orElseThrow(() -> new IllegalArgumentException("그룹 정보가 없습니다."));
+        // 그룹원 정보 가져오기
+        List<GroupUser> groupUsers = groupUserRepository.findAllByGroupIdWithUser(groupId);
+        List<UserResponse> users = new ArrayList<>();
+
+        for (GroupUser user : groupUsers) {
+            users.add(
+                    UserResponse.builder()
+                            .userId(user.getUser().getUserId())
+                            .name(user.getUser().getName())
+                            .profileImage(user.getUser().getProfileImage())
+                            .role(user.getRole())
+                            .build()
+            );
+        }
+
+        return GroupDetailResponse.builder()
+                .name(group.getName())
+                .groupImage(group.getGroupImage())
+                .users(users)
+                .build();
+    }
+
+    @Transactional
+    public GroupUpdateResponse updateGroup (String userId, Long groupId, GroupUpdateRequest request, MultipartFile image) throws IOException {
+        // 그룹이 존재하는지 확인 및 그룹 정보 가져오기
+        Group group = groupRepository.findById(groupId).orElseThrow(() -> new IllegalArgumentException("그룹 정보가 없습니다."));
+
+        // 그룹장 여부 확인
+        if (!groupUserRepository.existsByGroup_IdAndUser_UserIdAndRole(groupId, userId, UserRole.LEADER)) {
+            throw new IllegalArgumentException("그룹 정보 수정 권한이 없습니다.");
+        }
+
+        if (image != null && !image.isEmpty()) {
+
+            String fileName = UUID.randomUUID().toString() + "_" + image.getOriginalFilename();
+            String savePath = System.getProperty("user.dir") + "/src/main/resources/static/group/";
+
+            // 이미 저장된 이미지가 있을 경우 이미지 삭제
+            if (group.getGroupImage() != null) {
+                Path filePath = Paths.get(savePath + group.getGroupImage());
+                Files.deleteIfExists(filePath);
+            }
+            // file upload
+            image.transferTo(new File(savePath + fileName));
+            group.updateImage(fileName);
+        }
+
+        group.updateName(request.getName());
+
+        // 그룹원 정보 가져오기
+        List<GroupUser> groupUsers = groupUserRepository.findAllByGroupIdWithUser(groupId);
+        List<UserResponse> responses = new ArrayList<>();
+
+        for (GroupUser gu : groupUsers) {
+            responses.add(UserResponse.of(gu));
+        }
+
+        return GroupUpdateResponse.from(group, responses);
     }
 }

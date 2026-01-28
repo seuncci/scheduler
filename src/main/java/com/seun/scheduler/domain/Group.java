@@ -35,6 +35,10 @@ public class Group {
     @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<GroupUser> users = new ArrayList<>();
 
+    public void updateName(String name) {
+        this.name = name;
+    }
+
     public void updateImage(String groupImage) {
         this.groupImage = groupImage;
     }
