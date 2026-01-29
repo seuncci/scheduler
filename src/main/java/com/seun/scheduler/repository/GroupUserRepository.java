@@ -17,4 +17,6 @@ public interface GroupUserRepository extends JpaRepository<GroupUser, Long> {
     boolean existsByGroup_IdAndUser_UserIdAndRole(Long groupId, String userId, UserRole role);
     Optional<GroupUser> findByGroup_IdAndUser_UserId(Long groupId, String userId);
     long countByGroup_Id(Long groupId);
+    Optional<GroupUser> findByGroup_IdAndUser_UserIdAndRole(Long groupId, String userId, UserRole role);
+    boolean existsByGroup_IdAndUser_UserId(Long groupId, String userId);
 }

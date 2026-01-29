@@ -34,4 +34,8 @@ public class GroupUser {
     @CreatedDate
     @Column(name = "join_time", updatable = false)
     private LocalDateTime joinTime;
+
+    public void updateRole(UserRole role) {
+        this.role = role;
+    }
 }

@@ -1,5 +1,6 @@
 package com.seun.scheduler.controller;
 
+import com.seun.scheduler.domain.InvitationStatus;
 import com.seun.scheduler.dto.*;
 import com.seun.scheduler.security.UserDetailsImpl;
 import com.seun.scheduler.service.GroupService;
@@ -84,6 +85,59 @@ public class GroupController {
                 .status(HttpStatus.OK.value())
                 .code(HttpStatus.OK.name())
                 .message("삭제 완료")
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/{groupId}/leader")
+    public ResponseEntity<CommonResponse<Void>> delegateLeader (@PathVariable("groupId") Long groupId, @AuthenticationPrincipal UserDetailsImpl userDetails,
+                                                                @RequestParam("targetMemberId") String targetMemberId) {
+        groupService.delegateLeader(groupId, userDetails.getUsername(), targetMemberId);
+
+        CommonResponse<Void> response = CommonResponse.<Void> builder()
+                .status(HttpStatus.OK.value())
+                .code(HttpStatus.OK.name())
+                .message("그룹장 위임 완료")
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{groupId}/invitation")
+    public ResponseEntity<CommonResponse<Void>> inviteMember (
+            @PathVariable("groupId") Long groupId, @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @RequestParam("targetMemberId") String targetMemberId
+    ) {
+
+        groupService.inviteMember(groupId, userDetails.getUsername(), targetMemberId);
+
+        CommonResponse<Void> response = CommonResponse.<Void> builder()
+                .status(HttpStatus.OK.value())
+                .code(HttpStatus.OK.name())
+                .message("그룹원 초대 요청 완료")
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/invitations/{invitationId}")
+    public ResponseEntity<CommonResponse<Void>> processInvitation (
+            @PathVariable("invitationId") Long invitationId, @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @RequestParam("status") InvitationStatus status
+            ) {
+
+        String message = "초대";
+
+        groupService.processInvitation(invitationId, userDetails.getUsername(), status);
+
+        if (status == InvitationStatus.ACCEPTED) message += " 수락";
+        else if (status == InvitationStatus.REJECTED) message += " 거절";
+
+        CommonResponse<Void> response = CommonResponse.<Void> builder()
+                .status(HttpStatus.OK.value())
+                .code(HttpStatus.OK.name())
+                .message(message)
                 .build();
 
         return ResponseEntity.ok(response);

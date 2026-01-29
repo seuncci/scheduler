@@ -38,4 +38,8 @@ public class GroupInvitation {
     @CreatedDate
     @Column(name = "request_time", updatable = false)
     private LocalDateTime requestTime;
+
+    public void updateStatus(InvitationStatus status) {
+        this.status = status;
+    }
 }

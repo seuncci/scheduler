@@ -1,10 +1,8 @@
 package com.seun.scheduler.service;
 
-import com.seun.scheduler.domain.Group;
-import com.seun.scheduler.domain.GroupUser;
-import com.seun.scheduler.domain.User;
-import com.seun.scheduler.domain.UserRole;
+import com.seun.scheduler.domain.*;
 import com.seun.scheduler.dto.*;
+import com.seun.scheduler.repository.GroupInvitationRepository;
 import com.seun.scheduler.repository.GroupRepository;
 import com.seun.scheduler.repository.GroupUserRepository;
 import com.seun.scheduler.repository.UserRepository;
@@ -30,6 +28,8 @@ public class GroupService {
     private final UserRepository userRepository;
     private final GroupRepository groupRepository;
     private final GroupUserRepository groupUserRepository;
+    private final GroupInvitationRepository groupInvitationRepository;
+    private final NotificationService notificationService;
 
     @Transactional
     public ResponseEntity<CommonResponse<Void>> create (
@@ -133,7 +133,7 @@ public class GroupService {
         Group group = groupRepository.findById(groupId).orElseThrow(() -> new IllegalArgumentException("그룹 정보가 없습니다."));
 
         // 그룹장 여부 확인
-        if (!groupUserRepository.existsByGroup_IdAndUser_UserIdAndRole(groupId, userId, UserRole.LEADER)) {
+        if (groupUserRepository.existsByGroup_IdAndUser_UserIdAndRole(groupId, userId, UserRole.LEADER)) {
             throw new IllegalArgumentException("그룹 정보 수정 권한이 없습니다.");
         }
 
@@ -204,7 +204,7 @@ public class GroupService {
         Group group = groupRepository.findById(groupId).orElseThrow(() -> new IllegalArgumentException("그룹 정보가 없습니다."));
 
         // 그룹장 여부 확인
-        if (!groupUserRepository.existsByGroup_IdAndUser_UserIdAndRole(groupId, userId, UserRole.LEADER)) {
+        if (groupUserRepository.existsByGroup_IdAndUser_UserIdAndRole(groupId, userId, UserRole.LEADER)) {
             throw new IllegalArgumentException("그룹 삭제 권한이 없습니다.");
         } else {
             // 이미지 삭제 후 그룹 삭제
@@ -216,6 +216,92 @@ public class GroupService {
             }
 
             groupRepository.delete(group);
+        }
+    }
+
+    @Transactional
+    public void delegateLeader(Long groupId, String currentLeaderId, String targetMemberId) {
+        // 자기 자신에게 위임 x
+        if (currentLeaderId.equals(targetMemberId)) {
+            throw new IllegalArgumentException("자기 자신에게 위임할 수 없습니다.");
+        }
+
+        // 그룹 존재 여부 확인
+        Group group = groupRepository.findById(groupId).orElseThrow(() -> new IllegalArgumentException("그룹 정보가 없습니다."));
+        // 그룹장 여부 확인 ( 위임 전 그룹장 )
+        GroupUser curLeader = groupUserRepository.findByGroup_IdAndUser_UserIdAndRole(groupId, currentLeaderId, UserRole.LEADER)
+                .orElseThrow(() -> new IllegalArgumentException("그룹장만 위임이 가능합니다."));
+        // 위임할 멤버가 그룹원인지 확인
+        GroupUser targetMember = groupUserRepository.findByGroup_IdAndUser_UserIdAndRole(groupId, targetMemberId, UserRole.USER)
+                .orElseThrow(() -> new IllegalArgumentException("그룹원만 위임을 받을 수 있습니다."));
+
+        // 그룹장 위임
+        curLeader.updateRole(UserRole.USER);
+        targetMember.updateRole(UserRole.LEADER);
+    }
+
+    @Transactional
+    public void inviteMember(Long groupId, String leaderId, String targetMemberId) {
+        // 그룹 존재 여부 확인
+        Group group = groupRepository.findById(groupId).orElseThrow(() -> new IllegalArgumentException("그룹 정보가 없습니다."));
+
+        // 초대자와 초대 받는 멤버 정보
+        User inviter = userRepository.findByUserId(leaderId).orElseThrow(() -> new IllegalArgumentException("해당 유저의 정보가 없습니다."));
+        User invitee  = userRepository.findByUserId(targetMemberId).orElseThrow(() -> new IllegalArgumentException("해당 유저의 정보가 없습니다."));
+
+        // 초대자가 그룹장인지 확인
+        if (!groupUserRepository.existsByGroup_IdAndUser_UserIdAndRole(groupId, leaderId, UserRole.LEADER)) {
+            throw new IllegalArgumentException("해당 그룹의 그룹장만 초대가 가능합니다");
+        }
+
+        // 초대 받는 멤버가 이미 그룹에 있는지 확인
+        if (groupUserRepository.existsByGroup_IdAndUser_UserId(groupId, targetMemberId)) {
+            throw new IllegalArgumentException("이미 해당 그룹에 속해 있습니다.");
+        }
+
+        // 초대 데이터 추가
+        GroupInvitation invitation = GroupInvitation.builder()
+                .group(group)
+                .inviter(inviter)
+                .invitee(invitee)
+                .status(InvitationStatus.PENDING)
+                .build();
+
+        groupInvitationRepository.save(invitation);
+
+        // 실시간 알림
+        notificationService.send(targetMemberId, group.getName() + " 그룹에서 초대하셨습니다.");
+    }
+
+    @Transactional
+    public void processInvitation(Long invitationId, String userId, InvitationStatus status) {
+        // 초대 존재 여부 확인
+        GroupInvitation invitation = groupInvitationRepository.findById(invitationId).orElseThrow(
+                () -> new IllegalArgumentException("초대 정보가 존재하지 않습니다.")
+        );
+
+        // 본인에게 온 초대인지 확인
+        if (!invitation.getInvitee().getUserId().equals(userId)) {
+            throw new IllegalArgumentException("본인에게 온 초대만 처리가 가능합니다.");
+        }
+
+        // 이미 처리된 초대인지 확인
+        if (invitation.getStatus() != InvitationStatus.PENDING) {
+            throw new IllegalArgumentException("이미 처리된 초대입니다.");
+        }
+
+        invitation.updateStatus(status);
+
+        // 수락 시 그룹원으로 추가
+        if (invitation.getStatus() == InvitationStatus.ACCEPTED) {
+
+            GroupUser newMember = GroupUser.builder()
+                    .group(invitation.getGroup())
+                    .user(invitation.getInvitee())
+                    .role(UserRole.USER)
+                    .build();
+
+            groupUserRepository.save(newMember);
         }
     }
 }
