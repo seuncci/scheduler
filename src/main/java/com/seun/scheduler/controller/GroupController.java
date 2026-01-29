@@ -62,4 +62,30 @@ public class GroupController {
 
         return ResponseEntity.ok(response);
     }
+
+    @DeleteMapping("/{groupId}/leave")
+    public ResponseEntity<CommonResponse<Void>> leaveGroup (@PathVariable("groupId") Long groupId, @AuthenticationPrincipal UserDetailsImpl userDetails) throws IOException {
+        groupService.leaveGroup(groupId, userDetails.getUsername());
+
+        CommonResponse<Void> response = CommonResponse.<Void> builder()
+                .status(HttpStatus.OK.value())
+                .code(HttpStatus.OK.name())
+                .message("탈퇴 완료")
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{groupId}")
+    public ResponseEntity<CommonResponse<Void>> deleteGroup (@PathVariable("groupId") Long groupId, @AuthenticationPrincipal UserDetailsImpl userDetails) throws IOException {
+        groupService.deleteGroup(groupId, userDetails.getUsername());
+
+        CommonResponse<Void> response = CommonResponse.<Void> builder()
+                .status(HttpStatus.OK.value())
+                .code(HttpStatus.OK.name())
+                .message("삭제 완료")
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
 }

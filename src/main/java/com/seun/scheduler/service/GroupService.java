@@ -164,4 +164,58 @@ public class GroupService {
 
         return GroupUpdateResponse.from(group, responses);
     }
+
+    @Transactional
+    public void leaveGroup(Long groupId, String userId) throws IOException {
+        // 그룹이 존재하는지 확인 및 그룹 정보 가져오기
+        Group group = groupRepository.findById(groupId).orElseThrow(() -> new IllegalArgumentException("그룹 정보가 없습니다."));
+
+        // 그룹원 여부 확인
+        GroupUser groupUser = groupUserRepository.findByGroup_IdAndUser_UserId(groupId, userId).orElseThrow(() -> new IllegalArgumentException("해당 그룹원이 아닙니다."));
+
+        /*
+            그룹원 권한 확인
+            USER - 탈퇴 가능
+            LEADER - 탈퇴 불가. 그룹원이 자기 자신 밖에 없을 경우 그룹 삭제
+         */
+        if (groupUser.getRole() == UserRole.USER) {
+            groupUserRepository.delete(groupUser);
+        } else if (groupUser.getRole() == UserRole.LEADER) {
+
+            if (groupUserRepository.countByGroup_Id(groupId) == 1) {
+                // 이미지 삭제 후 그룹 삭제
+                String savePath = System.getProperty("user.dir") + "/src/main/resources/static/group/";
+
+                if (group.getGroupImage() != null) {
+                    Path filePath = Paths.get(savePath + group.getGroupImage());
+                    Files.deleteIfExists(filePath);
+                }
+
+                groupRepository.delete(group);
+            } else {
+                throw new IllegalArgumentException("그룹원이 있을 경우 그룹장을 위임한 후에 탈퇴가 가능합니다.");
+            }
+        }
+    }
+
+    @Transactional
+    public void deleteGroup(Long groupId, String userId) throws IOException {
+        // 그룹이 존재하는지 확인 및 그룹 정보 가져오기
+        Group group = groupRepository.findById(groupId).orElseThrow(() -> new IllegalArgumentException("그룹 정보가 없습니다."));
+
+        // 그룹장 여부 확인
+        if (!groupUserRepository.existsByGroup_IdAndUser_UserIdAndRole(groupId, userId, UserRole.LEADER)) {
+            throw new IllegalArgumentException("그룹 삭제 권한이 없습니다.");
+        } else {
+            // 이미지 삭제 후 그룹 삭제
+            String savePath = System.getProperty("user.dir") + "/src/main/resources/static/group/";
+
+            if (group.getGroupImage() != null) {
+                Path filePath = Paths.get(savePath + group.getGroupImage());
+                Files.deleteIfExists(filePath);
+            }
+
+            groupRepository.delete(group);
+        }
+    }
 }
