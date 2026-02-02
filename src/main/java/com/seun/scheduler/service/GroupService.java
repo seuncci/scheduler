@@ -304,4 +304,16 @@ public class GroupService {
             groupUserRepository.save(newMember);
         }
     }
+
+    @Transactional(readOnly = true)
+    public List<GroupInvitationResponse> getMyInvitations(String userId) {
+        List<GroupInvitation> invitations = groupInvitationRepository.findAllByInviteeIdAndPending(userId);
+        List<GroupInvitationResponse> responses = new ArrayList<>();
+
+        for (GroupInvitation gi : invitations) {
+            responses.add(GroupInvitationResponse.of(gi));
+        }
+
+        return responses;
+    }
 }

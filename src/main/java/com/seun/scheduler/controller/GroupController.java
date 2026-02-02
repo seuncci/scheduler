@@ -142,4 +142,18 @@ public class GroupController {
 
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/invitations")
+    public ResponseEntity<CommonResponse<List<GroupInvitationResponse>>> getMyInvitations(@AuthenticationPrincipal UserDetailsImpl userDetails) {
+        List<GroupInvitationResponse> responses = groupService.getMyInvitations(userDetails.getUsername());
+
+        CommonResponse<List<GroupInvitationResponse>> response = CommonResponse.<List<GroupInvitationResponse>> builder()
+                .status(HttpStatus.OK.value())
+                .code(HttpStatus.OK.name())
+                .message("조회 성공")
+                .data(responses)
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
 }
