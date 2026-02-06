@@ -1,5 +1,6 @@
 package com.seun.scheduler.domain;
 
+import com.seun.scheduler.dto.ScheduleRequest;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -42,4 +43,11 @@ public class Schedule {
     @JoinColumn(name = "group_id")
     private Group group;
 
+    public void update(ScheduleRequest request) {
+        this.title = request.getTitle();
+        this.content = request.getContent();
+        this.location = request.getLocation();
+        this.startDateTime = request.getStartDateTime();
+        this.endDateTime = request.getEndDateTime();
+    }
 }
