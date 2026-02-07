@@ -1,8 +1,6 @@
 package com.seun.scheduler.controller;
 
-import com.seun.scheduler.dto.CommonResponse;
-import com.seun.scheduler.dto.ScheduleRequest;
-import com.seun.scheduler.dto.ScheduleResponse;
+import com.seun.scheduler.dto.*;
 import com.seun.scheduler.security.UserDetailsImpl;
 import com.seun.scheduler.service.ScheduleService;
 import jakarta.validation.Valid;
@@ -83,6 +81,75 @@ public class ScheduleController {
                 .status(HttpStatus.OK.value())
                 .code(HttpStatus.OK.name())
                 .message("삭제 성공")
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{scheduleId}/comments")
+    public ResponseEntity<CommonResponse<ScheduleCommentResponse>> createComment(
+            @PathVariable("scheduleId") long scheduleId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @Valid @RequestBody ScheduleCommentRequest request
+            ) {
+        ScheduleCommentResponse commentResponse = scheduleService.createComment(scheduleId, userDetails.getUsername(), request);
+
+        CommonResponse<ScheduleCommentResponse> response = CommonResponse.<ScheduleCommentResponse>builder()
+                .status(HttpStatus.OK.value())
+                .code(HttpStatus.OK.name())
+                .message("댓글 등록 성공")
+                .data(commentResponse)
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/comments/{commentId}")
+    public ResponseEntity<CommonResponse<ScheduleCommentResponse>> updateComment(
+            @PathVariable("commentId") long commentId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @Valid @RequestBody ScheduleCommentRequest request
+    ) {
+        ScheduleCommentResponse commentResponse = scheduleService.updateComment(commentId, userDetails.getUsername(), request);
+
+        CommonResponse<ScheduleCommentResponse> response = CommonResponse.<ScheduleCommentResponse>builder()
+                .status(HttpStatus.OK.value())
+                .code(HttpStatus.OK.name())
+                .message("댓글 수정 성공")
+                .data(commentResponse)
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/comments/{commentId}")
+    public ResponseEntity<CommonResponse<Void>> deleteComment(
+            @PathVariable("commentId") long commentId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ) {
+        scheduleService.deleteComment(commentId, userDetails.getUsername());
+
+        CommonResponse<Void> response = CommonResponse.<Void>builder()
+                .status(HttpStatus.OK.value())
+                .code(HttpStatus.OK.name())
+                .message("삭제 성공")
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{scheduleId}")
+    public ResponseEntity<CommonResponse<ScheduleDetailResponse>> getScheduleDetail(
+            @PathVariable("scheduleId") long scheduleId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ) {
+        ScheduleDetailResponse detailResponse = scheduleService.getScheduleDetail(scheduleId, userDetails.getUsername());
+
+        CommonResponse<ScheduleDetailResponse> response = CommonResponse.<ScheduleDetailResponse>builder()
+                .status(HttpStatus.OK.value())
+                .code(HttpStatus.OK.name())
+                .message("조회 성공")
+                .data(detailResponse)
                 .build();
 
         return ResponseEntity.ok(response);

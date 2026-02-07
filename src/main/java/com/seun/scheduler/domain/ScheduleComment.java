@@ -11,33 +11,33 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "group_user")
+@Table(name = "schedule_comment")
 @Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
-public class GroupUser {
+public class ScheduleComment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "group_id")
-    private Group group;
+    @JoinColumn(name = "schedule_id")
+    private Schedule schedule;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
 
-    @Enumerated(EnumType.STRING)
-    private UserRole role;
+    @Column(nullable = false)
+    private String content;
 
     @CreatedDate
-    @Column(name = "join_time", updatable = false)
-    private LocalDateTime joinTime;
+    @Column(name = "create_time", updatable = false)
+    private LocalDateTime createTime;
 
-    public void updateRole(UserRole role) {
-        this.role = role;
+    public void update(String content) {
+        this.content = content;
     }
 }
