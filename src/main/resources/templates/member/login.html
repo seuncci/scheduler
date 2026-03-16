@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+  <style>
+    body { font-family: "Pretendard", sans-serif; }
+  </style>
+</head>
+<body class="bg-gray-50 flex items-center justify-center min-h-screen">
+<div id="error-toast"
+     th:if="${param.error}"
+     class="fixed top-[-100px] left-1/2 -translate-x-1/2 z-50 w-full max-w-sm transition-all duration-500 ease-in-out">
+  <div class="mx-4 bg-red-50 border border-red-200 text-red-400 px-4 py-3 rounded-lg shadow-md flex items-center justify-center gap-2">
+    <i class="fa-solid fa-circle-exclamation"></i>
+    <span class="font-medium text-sm">아이디 또는 비밀번호를 확인해주세요.</span>
+  </div>
+</div>
+
+<div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md border border-gray-200">
+
+  <div class="text-center mb-8">
+    <h1 class="text-3xl font-bold text-gray-700 flex items-center justify-center gap-2">
+      로그인
+    </h1>
+  </div>
+
+  <form th:action="@{/members/login}" method="post" class="space-y-4">
+
+    <div>
+      <div class="relative">
+        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+            <i class="fa-solid fa-user"></i>
+        </span>
+        <input type="text" name="username" placeholder="아이디를 입력하세요"
+               class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md placeholder:text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all">
+      </div>
+    </div>
+
+    <div>
+      <div class="relative">
+        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+            <i class="fa-solid fa-lock"></i>
+        </span>
+        <input type="password" name="password" placeholder="비밀번호를 입력하세요"
+               class="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md placeholder:text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all">
+        <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 cursor-pointer hover:text-gray-600">
+            <i class="fa-solid fa-eye-slash"></i>
+        </span>
+      </div>
+    </div>
+
+    <button type="submit"
+            class="w-full bg-gray-600 hover:bg-black text-white font-bold py-3 rounded-md shadow-md transition-colors duration-200 mt-2">
+      로그인
+    </button>
+  </form>
+
+  <div class="pt-3 border-gray-100">
+    <a th:href="@{/members/signup}"
+       class="w-full flex items-center justify-center gap-2 border border-gray-300 py-2 rounded-md text-gray-600 font-medium hover:bg-gray-50 transition-all">
+       회원가입
+    </a>
+  </div>
+</div>
+
+<script>
+  window.onload = function() {
+      const toast = document.getElementById('error-toast');
+      if (toast) {
+          setTimeout(() => {
+              toast.style.top = '20px';
+          }, 100);
+
+          setTimeout(() => {
+              toast.style.top = '-100px';
+          }, 3000);
+      }
+  };
+</script>
+</body>
+</html>

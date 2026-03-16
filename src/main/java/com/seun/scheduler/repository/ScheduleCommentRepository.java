@@ -8,6 +8,6 @@ import org.springframework.data.repository.query.Param;
 import java.util.Optional;
 
 public interface ScheduleCommentRepository extends JpaRepository<ScheduleComment, Long> {
-    @Query("SELECT c FROM ScheduleComment c JOIN FETCH c.user WHERE c.id = :commentId")
-    Optional<ScheduleComment> findByIdWithUser(@Param("commentId") Long commentId);
+    @Query("SELECT c FROM ScheduleComment c JOIN FETCH c.member WHERE c.id = :commentId")
+    Optional<ScheduleComment> findByIdWithMember(@Param("commentId") Long commentId);
 }

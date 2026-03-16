@@ -28,11 +28,11 @@ public class GroupInvitation {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "inviter_id")
-    private User inviter;
+    private Member inviter;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "invitee_id")
-    private User invitee;
+    private Member invitee;
 
     @Enumerated(EnumType.STRING)
     private InvitationStatus status;

@@ -18,13 +18,13 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
-public class User {
+public class Member {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
     @Column(name = "user_id", nullable = false, unique = true, updatable = false, length = 10)
-    private String userId;
+    private String memberId;
 
     @Column(nullable = false)
     private String password;
@@ -45,8 +45,8 @@ public class User {
     @Column(name = "last_login_time")
     private LocalDateTime lastLoginTime;
 
-    public User(String userId, String password, String name) {
-        this.userId = userId;
+    public Member(String memberId, String password, String name) {
+        this.memberId = memberId;
         this.password = password;
         this.name = name;
     }

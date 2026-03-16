@@ -3,7 +3,7 @@ package com.seun.scheduler.service;
 import com.seun.scheduler.domain.Group;
 import com.seun.scheduler.domain.Schedule;
 import com.seun.scheduler.domain.ScheduleComment;
-import com.seun.scheduler.domain.User;
+import com.seun.scheduler.domain.Member;
 import com.seun.scheduler.dto.*;
 import com.seun.scheduler.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -15,14 +15,14 @@ import org.springframework.transaction.annotation.Transactional;
 public class ScheduleService {
     private final ScheduleRepository scheduleRepository;
     private final ScheduleCommentRepository scheduleCommentRepository;
-    private final UserRepository userRepository;
+    private final MemberRepository memberRepository;
     private final GroupRepository groupRepository;
     private final GroupUserRepository groupUserRepository;
 
     @Transactional
     public ScheduleResponse createPersonalSchedule(String userId, ScheduleRequest request) {
 
-        User user = userRepository.findByUserId(userId).orElseThrow(
+        Member member = memberRepository.findByMemberId(userId).orElseThrow(
                 () -> new IllegalArgumentException("유저를 찾을 수 없습니다.")
         );
 
@@ -32,7 +32,7 @@ public class ScheduleService {
                 .location(request.getLocation())
                 .startDateTime(request.getStartDateTime())
                 .endDateTime(request.getEndDateTime())
-                .user(user)
+                .member(member)
                 .build();
 
         scheduleRepository.save(schedule);
@@ -43,7 +43,7 @@ public class ScheduleService {
     @Transactional
     public ScheduleResponse createGroupSchedule(long groupId, String userId, ScheduleRequest request) {
 
-        User user = userRepository.findByUserId(userId).orElseThrow(
+        Member member = memberRepository.findByMemberId(userId).orElseThrow(
                 () -> new IllegalArgumentException("유저를 찾을 수 없습니다.")
         );
 
@@ -51,7 +51,7 @@ public class ScheduleService {
         Group group = groupRepository.findById(groupId).orElseThrow(() -> new IllegalArgumentException("그룹 정보가 없습니다."));
 
         // 해당 유저가 그룹원의 멤버인지 확인
-        if (!groupUserRepository.existsByGroup_IdAndUser_UserId(groupId, userId)) {
+        if (!groupUserRepository.existsByGroup_IdAndMember_MemberId(groupId, userId)) {
             throw new IllegalArgumentException("해당 그룹의 멤버만 일정을 등록할 수 있습니다.");
         }
 
@@ -61,7 +61,7 @@ public class ScheduleService {
                 .location(request.getLocation())
                 .startDateTime(request.getStartDateTime())
                 .endDateTime(request.getEndDateTime())
-                .user(user)
+                .member(member)
                 .group(group)
                 .build();
 
@@ -75,7 +75,7 @@ public class ScheduleService {
         Schedule schedule = scheduleRepository.findByIdWithUser(scheduleId).orElseThrow(() -> new IllegalArgumentException("일정을 찾을 수가 없습니다."));
 
         // 본인이 작성한 일정인지 확인
-        if (!schedule.getUser().getUserId().equals(userId)) {
+        if (!schedule.getMember().getMemberId().equals(userId)) {
             throw new IllegalArgumentException("본인의 일정만 수정이 가능합니다.");
         }
 
@@ -91,7 +91,7 @@ public class ScheduleService {
         Schedule schedule = scheduleRepository.findByIdWithUser(scheduleId).orElseThrow(() -> new IllegalArgumentException("일정을 찾을 수가 없습니다."));
 
         // 본인이 작성한 일정인지 확인
-        if (!schedule.getUser().getUserId().equals(userId)) {
+        if (!schedule.getMember().getMemberId().equals(userId)) {
             throw new IllegalArgumentException("본인의 일정만 삭제가 가능합니다.");
         }
 
@@ -100,7 +100,7 @@ public class ScheduleService {
 
     @Transactional
     public ScheduleCommentResponse createComment(long scheduleId, String userId, ScheduleCommentRequest request) {
-        User user = userRepository.findByUserId(userId).orElseThrow(
+        Member member = memberRepository.findByMemberId(userId).orElseThrow(
                 () -> new IllegalArgumentException("유저를 찾을 수 없습니다.")
         );
 
@@ -109,14 +109,14 @@ public class ScheduleService {
         // 그룹 일정만 댓글 등록이 가능하기 때문에 그룹 일정인지 체크
         if (schedule.getGroup() != null) {
             // 해당 유저가 그룹원의 멤버인지 확인
-            if (!groupUserRepository.existsByGroup_IdAndUser_UserId(schedule.getGroup().getId(), userId)) {
+            if (!groupUserRepository.existsByGroup_IdAndMember_MemberId(schedule.getGroup().getId(), userId)) {
                 throw new IllegalArgumentException("해당 그룹의 멤버만 일정을 등록할 수 있습니다.");
             }
         }
 
         ScheduleComment comment = ScheduleComment.builder()
                 .schedule(schedule)
-                .user(user)
+                .member(member)
                 .content(request.getContent())
                 .build();
 
@@ -145,10 +145,10 @@ public class ScheduleService {
     @Transactional
     public void deleteComment(long commentId, String userId) {
         // 댓글이 등록 되어 있는 지 확인
-        ScheduleComment comment = scheduleCommentRepository.findByIdWithUser(commentId).orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수가 없습니다."));
+        ScheduleComment comment = scheduleCommentRepository.findByIdWithMember(commentId).orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수가 없습니다."));
 
         // 본인이 작성한 댓글인지 확인
-        if (!comment.getUser().getUserId().equals(userId)) {
+        if (!comment.getMember().getMemberId().equals(userId)) {
             throw new IllegalArgumentException("본인의 댓글만 삭제가 가능합니다.");
         }
 
@@ -161,11 +161,11 @@ public class ScheduleService {
 
         // 그룹 채팅인 경우 그룹원이 확인 가능하고 개인 일정이면 작성자가 확인 가능한지 확인
         if (schedule.getGroup() == null) {
-            if (!schedule.getUser().getUserId().equals(userId)) {
+            if (!schedule.getMember().getMemberId().equals(userId)) {
                 throw new IllegalArgumentException("본인의 개인 일정만 조회할 수 있습니다.");
             }
         } else {
-            if (!groupUserRepository.existsByGroup_IdAndUser_UserId(schedule.getGroup().getId(), userId)) {
+            if (!groupUserRepository.existsByGroup_IdAndMember_MemberId(schedule.getGroup().getId(), userId)) {
                 throw new IllegalArgumentException("해당 그룹의 멤버만 일정을 조회할 수 있습니다.");
             }
         }

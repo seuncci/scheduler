@@ -34,12 +34,12 @@ public class ScheduleDetailResponse {
 
         // 댓글이 있을 경우 댓글 목록 가져오기
         for (ScheduleComment comment : schedule.getComments()) {
-            comments.add(ScheduleCommentResponse.from(comment, comment.getSchedule().getId(), comment.getUser().getUserId()));
+            comments.add(ScheduleCommentResponse.from(comment, comment.getSchedule().getId(), comment.getMember().getMemberId()));
         }
 
         return ScheduleDetailResponse.builder()
                 .id(schedule.getId())
-                .userId(schedule.getUser().getUserId())
+                .userId(schedule.getMember().getMemberId())
                 .groupName(groupName)
                 .title(schedule.getTitle())
                 .content(schedule.getContent())

@@ -15,9 +15,9 @@ public class UserResponse {
 
     public static UserResponse of(GroupUser user) {
         return UserResponse.builder()
-                .userId(user.getUser().getUserId())
-                .name(user.getUser().getName())
-                .profileImage(user.getUser().getProfileImage())
+                .userId(user.getMember().getMemberId())
+                .name(user.getMember().getName())
+                .profileImage(user.getMember().getProfileImage())
                 .role(user.getRole())
                 .build();
     }

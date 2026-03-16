@@ -9,6 +9,6 @@ import java.util.List;
 import java.util.Optional;
 
 public interface GroupInvitationRepository extends JpaRepository<GroupInvitation, Long> {
-    @Query("SELECT gi FROM GroupInvitation gi JOIN FETCH gi.group JOIN FETCH gi.inviter WHERE gi.invitee.userId = :inviteeId AND gi.status = 'PENDING'")
+    @Query("SELECT gi FROM GroupInvitation gi JOIN FETCH gi.group JOIN FETCH gi.inviter WHERE gi.invitee.memberId = :inviteeId AND gi.status = 'PENDING'")
     List<GroupInvitation> findAllByInviteeIdAndPending(@Param("inviteeId") String inviteeId);
 }

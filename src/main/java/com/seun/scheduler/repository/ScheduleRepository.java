@@ -9,8 +9,8 @@ import org.springframework.data.repository.query.Param;
 import java.util.Optional;
 
 public interface ScheduleRepository extends JpaRepository <Schedule, Long> {
-    @Query("SELECT s FROM Schedule s JOIN FETCH s.user WHERE s.id = :scheduleId")
+    @Query("SELECT s FROM Schedule s JOIN FETCH s.member WHERE s.id = :scheduleId")
     Optional<Schedule> findByIdWithUser(@Param("scheduleId") Long scheduleId);
-    @Query("SELECT s FROM Schedule s JOIN FETCH s.user LEFT JOIN FETCH s.group LEFT JOIN FETCH s.comment c LEFT JOIN FETCH c.user WHERE s.id = :scheduleId")
+    @Query("SELECT s FROM Schedule s JOIN FETCH s.member LEFT JOIN FETCH s.group LEFT JOIN FETCH s.comments c LEFT JOIN FETCH c.member WHERE s.id = :scheduleId")
     Optional<Schedule> findByIdWithAll(@Param("scheduleId") Long scheduleId);
 }

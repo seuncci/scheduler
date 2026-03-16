@@ -5,7 +5,7 @@ import com.seun.scheduler.dto.*;
 import com.seun.scheduler.repository.GroupInvitationRepository;
 import com.seun.scheduler.repository.GroupRepository;
 import com.seun.scheduler.repository.GroupUserRepository;
-import com.seun.scheduler.repository.UserRepository;
+import com.seun.scheduler.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,7 +25,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class GroupService {
-    private final UserRepository userRepository;
+    private final MemberRepository memberRepository;
     private final GroupRepository groupRepository;
     private final GroupUserRepository groupUserRepository;
     private final GroupInvitationRepository groupInvitationRepository;
@@ -37,7 +37,7 @@ public class GroupService {
     ) throws IOException {
         String fileName = null;
 
-        User user = userRepository.findByUserId(userId).orElseThrow(
+        Member member = memberRepository.findByMemberId(userId).orElseThrow(
                 () -> new IllegalArgumentException("유저를 찾을 수 없습니다.")
         );
 
@@ -56,7 +56,7 @@ public class GroupService {
 
         GroupUser groupUser = GroupUser.builder()
                 .group(group)
-                .user(user)
+                .member(member)
                 .role(UserRole.LEADER)
                 .build();
 
@@ -74,11 +74,11 @@ public class GroupService {
     @Transactional(readOnly = true)
     public ResponseEntity<CommonResponse<List<GroupResponse>>> getMyGroupList (String userId) {
 
-        User user = userRepository.findByUserId(userId).orElseThrow(
+        Member member = memberRepository.findByMemberId(userId).orElseThrow(
                 () -> new IllegalArgumentException("유저를 찾을 수 없습니다.")
         );
 
-        List<GroupUser> groups = groupUserRepository.findAllByUserIdWithGroup(userId);
+        List<GroupUser> groups = groupUserRepository.findAllByMemberIdWithGroup(userId);
         List<GroupResponse> responses = new ArrayList<>();
 
         for (GroupUser gu : groups) {
@@ -112,9 +112,9 @@ public class GroupService {
         for (GroupUser user : groupUsers) {
             users.add(
                     UserResponse.builder()
-                            .userId(user.getUser().getUserId())
-                            .name(user.getUser().getName())
-                            .profileImage(user.getUser().getProfileImage())
+                            .userId(user.getMember().getMemberId())
+                            .name(user.getMember().getName())
+                            .profileImage(user.getMember().getProfileImage())
                             .role(user.getRole())
                             .build()
             );
@@ -133,7 +133,7 @@ public class GroupService {
         Group group = groupRepository.findById(groupId).orElseThrow(() -> new IllegalArgumentException("그룹 정보가 없습니다."));
 
         // 그룹장 여부 확인
-        if (groupUserRepository.existsByGroup_IdAndUser_UserIdAndRole(groupId, userId, UserRole.LEADER)) {
+        if (groupUserRepository.existsByGroup_IdAndMember_MemberIdAndRole(groupId, userId, UserRole.LEADER)) {
             throw new IllegalArgumentException("그룹 정보 수정 권한이 없습니다.");
         }
 
@@ -171,7 +171,7 @@ public class GroupService {
         Group group = groupRepository.findById(groupId).orElseThrow(() -> new IllegalArgumentException("그룹 정보가 없습니다."));
 
         // 그룹원 여부 확인
-        GroupUser groupUser = groupUserRepository.findByGroup_IdAndUser_UserId(groupId, userId).orElseThrow(() -> new IllegalArgumentException("해당 그룹원이 아닙니다."));
+        GroupUser groupUser = groupUserRepository.findByGroup_IdAndMember_MemberId(groupId, userId).orElseThrow(() -> new IllegalArgumentException("해당 그룹원이 아닙니다."));
 
         /*
             그룹원 권한 확인
@@ -204,7 +204,7 @@ public class GroupService {
         Group group = groupRepository.findById(groupId).orElseThrow(() -> new IllegalArgumentException("그룹 정보가 없습니다."));
 
         // 그룹장 여부 확인
-        if (groupUserRepository.existsByGroup_IdAndUser_UserIdAndRole(groupId, userId, UserRole.LEADER)) {
+        if (groupUserRepository.existsByGroup_IdAndMember_MemberIdAndRole(groupId, userId, UserRole.LEADER)) {
             throw new IllegalArgumentException("그룹 삭제 권한이 없습니다.");
         } else {
             // 이미지 삭제 후 그룹 삭제
@@ -229,10 +229,10 @@ public class GroupService {
         // 그룹 존재 여부 확인
         Group group = groupRepository.findById(groupId).orElseThrow(() -> new IllegalArgumentException("그룹 정보가 없습니다."));
         // 그룹장 여부 확인 ( 위임 전 그룹장 )
-        GroupUser curLeader = groupUserRepository.findByGroup_IdAndUser_UserIdAndRole(groupId, currentLeaderId, UserRole.LEADER)
+        GroupUser curLeader = groupUserRepository.findByGroup_IdAndMember_MemberIdAndRole(groupId, currentLeaderId, UserRole.LEADER)
                 .orElseThrow(() -> new IllegalArgumentException("그룹장만 위임이 가능합니다."));
         // 위임할 멤버가 그룹원인지 확인
-        GroupUser targetMember = groupUserRepository.findByGroup_IdAndUser_UserIdAndRole(groupId, targetMemberId, UserRole.USER)
+        GroupUser targetMember = groupUserRepository.findByGroup_IdAndMember_MemberIdAndRole(groupId, targetMemberId, UserRole.USER)
                 .orElseThrow(() -> new IllegalArgumentException("그룹원만 위임을 받을 수 있습니다."));
 
         // 그룹장 위임
@@ -246,16 +246,16 @@ public class GroupService {
         Group group = groupRepository.findById(groupId).orElseThrow(() -> new IllegalArgumentException("그룹 정보가 없습니다."));
 
         // 초대자와 초대 받는 멤버 정보
-        User inviter = userRepository.findByUserId(leaderId).orElseThrow(() -> new IllegalArgumentException("해당 유저의 정보가 없습니다."));
-        User invitee  = userRepository.findByUserId(targetMemberId).orElseThrow(() -> new IllegalArgumentException("해당 유저의 정보가 없습니다."));
+        Member inviter = memberRepository.findByMemberId(leaderId).orElseThrow(() -> new IllegalArgumentException("해당 유저의 정보가 없습니다."));
+        Member invitee  = memberRepository.findByMemberId(targetMemberId).orElseThrow(() -> new IllegalArgumentException("해당 유저의 정보가 없습니다."));
 
         // 초대자가 그룹장인지 확인
-        if (!groupUserRepository.existsByGroup_IdAndUser_UserIdAndRole(groupId, leaderId, UserRole.LEADER)) {
+        if (!groupUserRepository.existsByGroup_IdAndMember_MemberIdAndRole(groupId, leaderId, UserRole.LEADER)) {
             throw new IllegalArgumentException("해당 그룹의 그룹장만 초대가 가능합니다");
         }
 
         // 초대 받는 멤버가 이미 그룹에 있는지 확인
-        if (groupUserRepository.existsByGroup_IdAndUser_UserId(groupId, targetMemberId)) {
+        if (groupUserRepository.existsByGroup_IdAndMember_MemberId(groupId, targetMemberId)) {
             throw new IllegalArgumentException("이미 해당 그룹에 속해 있습니다.");
         }
 
@@ -281,7 +281,7 @@ public class GroupService {
         );
 
         // 본인에게 온 초대인지 확인
-        if (!invitation.getInvitee().getUserId().equals(userId)) {
+        if (!invitation.getInvitee().getMemberId().equals(userId)) {
             throw new IllegalArgumentException("본인에게 온 초대만 처리가 가능합니다.");
         }
 
@@ -297,7 +297,7 @@ public class GroupService {
 
             GroupUser newMember = GroupUser.builder()
                     .group(invitation.getGroup())
-                    .user(invitation.getInvitee())
+                    .member(invitation.getInvitee())
                     .role(UserRole.USER)
                     .build();
 

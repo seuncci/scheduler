@@ -19,7 +19,7 @@ public class GroupInvitationResponse {
         return GroupInvitationResponse.builder()
                 .invitationId(invitation.getId())
                 .groupName(invitation.getGroup().getName())
-                .inviterName(invitation.getInviter().getUserId())
+                .inviterName(invitation.getInviter().getMemberId())
                 .requestTime(invitation.getRequestTime())
                 .build();
     }

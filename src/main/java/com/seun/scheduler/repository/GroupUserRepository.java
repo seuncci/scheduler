@@ -10,13 +10,13 @@ import java.util.List;
 import java.util.Optional;
 
 public interface GroupUserRepository extends JpaRepository<GroupUser, Long> {
-    @Query("SELECT gu FROM GroupUser gu JOIN FETCH gu.group WHERE gu.user.userId = :userId")
-    List<GroupUser> findAllByUserIdWithGroup(@Param("userId") String userId);
-    @Query("SELECT gu FROM GroupUser gu JOIN FETCH gu.user WHERE gu.group.id = :groupId")
+    @Query("SELECT gu FROM GroupUser gu JOIN FETCH gu.group WHERE gu.member.memberId = :memberId")
+    List<GroupUser> findAllByMemberIdWithGroup(@Param("memberId") String userId);
+    @Query("SELECT gu FROM GroupUser gu JOIN FETCH gu.member WHERE gu.group.id = :groupId")
     List<GroupUser> findAllByGroupIdWithUser(@Param("groupId") Long groupId);
-    boolean existsByGroup_IdAndUser_UserIdAndRole(Long groupId, String userId, UserRole role);
-    Optional<GroupUser> findByGroup_IdAndUser_UserId(Long groupId, String userId);
+    boolean existsByGroup_IdAndMember_MemberIdAndRole(Long groupId, String memberId, UserRole role);
+    Optional<GroupUser> findByGroup_IdAndMember_MemberId(Long groupId, String memberId);
     long countByGroup_Id(Long groupId);
-    Optional<GroupUser> findByGroup_IdAndUser_UserIdAndRole(Long groupId, String userId, UserRole role);
-    boolean existsByGroup_IdAndUser_UserId(Long groupId, String userId);
+    Optional<GroupUser> findByGroup_IdAndMember_MemberIdAndRole(Long groupId, String memberId, UserRole role);
+    boolean existsByGroup_IdAndMember_MemberId(Long groupId, String memberId);
 }

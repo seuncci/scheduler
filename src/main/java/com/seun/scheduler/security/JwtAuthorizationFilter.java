@@ -1,6 +1,8 @@
 package com.seun.scheduler.security;
 
+import com.seun.scheduler.domain.Member;
 import com.seun.scheduler.dto.CommonResponse;
+import com.seun.scheduler.repository.MemberRepository;
 import com.seun.scheduler.service.UserService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -14,6 +16,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -26,6 +29,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
     private final UserService userService;
+    private final MemberRepository memberRepository;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -65,7 +69,10 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
     }
 
     private Authentication createAuthentication(String username) {
-        UserDetails userDetails = userService.loadUserByUsername(username);
+        Member member = memberRepository.findByMemberId(username).orElseThrow(() -> new UsernameNotFoundException("not find Id"));
+
+        // UserDetails userDetails = userService.loadUserByUsername(username);
+        UserDetails userDetails = new UserDetailsImpl(member);
         return new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
     }
 

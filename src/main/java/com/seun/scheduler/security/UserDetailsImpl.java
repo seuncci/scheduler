@@ -1,6 +1,6 @@
 package com.seun.scheduler.security;
 
-import com.seun.scheduler.domain.User;
+import com.seun.scheduler.domain.Member;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -8,7 +8,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.Collections;
 
-public record UserDetailsImpl(User user) implements UserDetails {
+public record UserDetailsImpl(Member member) implements UserDetails {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
@@ -16,12 +16,12 @@ public record UserDetailsImpl(User user) implements UserDetails {
 
     @Override
     public String getPassword() {
-        return user.getPassword();
+        return member.getPassword();
     }
 
     @Override
     public String getUsername() {
-        return user.getUserId();
+        return member.getMemberId();
     }
 
     @Override public boolean isAccountNonExpired() { return true; }

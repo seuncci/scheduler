@@ -1,5 +1,6 @@
-package com.seun.scheduler.controller;
+package com.seun.scheduler.domain.member.controller;
 
+import com.seun.scheduler.domain.member.dto.MemberJoinRequest;
 import com.seun.scheduler.dto.*;
 import com.seun.scheduler.security.UserDetailsImpl;
 import com.seun.scheduler.service.UserService;
@@ -11,23 +12,15 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.Map;
 
 @RestController
-@RequestMapping("/users")
+@RequestMapping("/members")
 @RequiredArgsConstructor
-public class UserController {
+public class MemberApiController {
     private final UserService userService;
 
-    @PostMapping("/login")
-    public ResponseEntity<Map<String, String>> login(@RequestBody LoginRequest dto) {
-        String token = userService.login(dto);
-
-        return ResponseEntity.ok(Map.of("Token", token));
-    }
-
-    @PostMapping("/join")
-    public ResponseEntity<String> join(@Valid @RequestBody UserJoinRequest dto) {
+    @PostMapping("/signup")
+    public ResponseEntity<String> join(@Valid @RequestBody MemberJoinRequest dto) {
         userService.join(dto);
 
         return ResponseEntity.ok("success");

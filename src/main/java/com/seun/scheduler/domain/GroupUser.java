@@ -27,8 +27,8 @@ public class GroupUser {
     private Group group;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    private User user;
+    @JoinColumn(name = "member_id")
+    private Member member;
 
     @Enumerated(EnumType.STRING)
     private UserRole role;
