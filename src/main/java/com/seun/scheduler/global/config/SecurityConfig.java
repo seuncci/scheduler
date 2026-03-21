@@ -23,8 +23,8 @@ public class SecurityConfig {
                         .permitAll())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/members/login", "/members/signup").anonymous()
-                        .requestMatchers("/h2-console/**").permitAll()
+                        .requestMatchers("/members/login", "/members/signup", "/api/members/signup").anonymous()
+                        .requestMatchers("/h2-console/**", "/error").permitAll()
                         .anyRequest().authenticated())
                         // H2-console ( iframe ) 접속 허용을 위해 임시로 프레임 노출 허용
                         .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()));;

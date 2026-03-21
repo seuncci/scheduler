@@ -1,16 +1,17 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
-    <style>
-        body { font-family: "Pretendard", sans-serif; }
-    </style>
-</head>
-<body class="bg-gray-50 flex items-center justify-center min-h-screen py-10">
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/base-layout}">
+
+<main layout:fragment="content" class="flex items-center justify-center min-h-[calc(100vh-80px)]">
+<div id="error-toast"
+     class="fixed top-[-100px] left-1/2 -translate-x-1/2 z-50 w-full max-w-sm transition-all duration-500 ease-in-out">
+  <div class="mx-4 bg-red-50 border border-red-200 text-red-400 px-4 py-3 rounded-lg shadow-md flex items-center justify-center gap-2">
+    <i class="fa-solid fa-circle-exclamation"></i>
+    <span class="font-medium text-sm"></span>
+  </div>
+</div>
 <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md border border-gray-200 flex flex-col">
 
     <div class="text-center mb-8">
@@ -18,12 +19,12 @@
         <p class="text-gray-400 text-sm mt-2">서비스 이용을 위해 정보를 입력해주세요.</p>
     </div>
 
-    <form th:action="@{/members/signup}" method="post" class="space-y-4">
+    <form th:action="@{/api/members/signup}" method="post" class="space-y-4" id="signupForm">
         <div class="relative">
                 <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
                     <i class="fa-solid fa-user"></i>
                 </span>
-            <input type="text" name="username" placeholder="아이디를 입력하세요" required
+            <input type="text" name="memberId" placeholder="아이디를 입력하세요" required
                    class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md placeholder:text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
         </div>
 
@@ -65,5 +66,70 @@
         </button>
     </form>
 </div>
-</body>
+<script>
+
+document.getElementById('signupForm').addEventListener('submit', async function(e) {
+    
+    e.preventDefault();
+
+    const toast = document.getElementById('error-toast');
+    const messageSpan = toast.querySelector('span');
+    
+    const form = e.target;
+    const submitBtn = form.querySelector('button[type="submit"]');
+    
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+
+    if (data.password !== data.passwordConfirm) {
+
+        messageSpan.textContent = '비밀번호와 비밀번호 확인이 일치하지 않습니다.';
+
+        setTimeout(() => {
+              toast.style.top = '20px';
+          }, 100);
+
+          setTimeout(() => {
+              toast.style.top = '-100px';
+          }, 3000);
+
+        return;
+    }
+
+    try {
+        submitBtn.disabled = true;
+
+        const response = await fetch('/api/members/signup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+            
+        messageSpan.textContent = result.message;
+
+        setTimeout(() => {
+            toast.style.top = '20px';
+        }, 100);
+
+        setTimeout(() => {
+            toast.style.top = '-100px';
+
+            if (result.code === 2002) {
+                location.href = "/members/login";
+            }
+
+        }, 2000);
+        
+    } catch (error) {
+        console.error("Network Error:", error);
+        alert("서버 통신 오류가 발생했습니다.");
+    } finally {
+        submitBtn.disabled = false;
+    }
+
+});
+</script>
+</main>
 </html>

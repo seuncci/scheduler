@@ -1,16 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Title</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
-  <style>
-    body { font-family: "Pretendard", sans-serif; }
-  </style>
-</head>
-<body class="bg-gray-50 flex items-center justify-center min-h-screen">
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/base-layout}">
+
+<main layout:fragment="content" class="flex items-center justify-center min-h-[calc(100vh-80px)]">
 <div id="error-toast"
      th:if="${param.error}"
      class="fixed top-[-100px] left-1/2 -translate-x-1/2 z-50 w-full max-w-sm transition-all duration-500 ease-in-out">
@@ -81,5 +75,5 @@
       }
   };
 </script>
-</body>
+</main>
 </html>

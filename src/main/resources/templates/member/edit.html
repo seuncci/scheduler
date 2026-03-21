@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/base-layout}">
+
+<main layout:fragment="content">
+    <div id="toast"
+         class="fixed top-[-100px] left-1/2 -translate-x-1/2 z-50 w-full max-w-sm transition-all duration-500 ease-in-out">
+        <div id="toast-container" class="mx-4 px-4 py-3 rounded-lg shadow-md flex items-center justify-center gap-2 border">
+            <i id="toast-icon" class="fa-solid"></i>
+            <span id="toast-message" class="font-medium text-sm text-center"></span>
+        </div>
+    </div>
+    <div class="max-w-7xl mx-auto p-6">
+        <div class="flex flex-col md:flex-row gap-6">
+
+            <th:block th:replace="~{fragments/profile-sidebar :: menu('info')}"></th:block>
+
+            <div class="flex-1 flex flex-col gap-6">
+
+                <th:block th:replace="~{fragments/profile-sidebar :: summary('edit')}"></th:block>
+
+                <section class="bg-white p-8 rounded-2xl shadow-sm border border-gray-200">
+                    <div class="flex justify-between items-center mb-8 border-b pb-4">
+                        <h3 class="text-xl font-bold text-gray-800">프로필 정보 수정</h3>
+                        <p class="text-sm text-gray-400">회원님의 정보를 안전하게 수정하세요.</p>
+                    </div>
+
+                    <form id="editForm" class="space-y-6">
+
+                        <div class="space-y-3">
+                            <div class="flex items-center gap-6 p-4 bg-gray-50 rounded-2xl border border-dashed border-gray-300">
+                                <div class="relative w-20 h-20 flex-shrink-0">
+                                    <img id="form-img-preview"
+                                         src="/images/default-profile.png"
+                                         alt="preview"
+                                         class="w-full h-full object-cover rounded-xl shadow-sm border border-white">
+                                    <span id="form-img-new-badge"
+                                          class="absolute -top-2 -right-2 bg-gray-800 text-white text-[10px] px-2 py-0.5 rounded-full shadow-sm hidden">New
+                                    </span>
+                                </div>
+
+                                <div class="flex-1">
+                                    <input type="file" id="edit-image" name="profileImage" accept="image/*"
+                                           class="block w-full text-xs text-gray-500
+                          file:mr-4 file:py-2.5 file:px-5
+                          file:rounded-xl file:border-0
+                          file:text-xs file:font-bold
+                          file:bg-gray-800 file:text-white
+                          hover:file:bg-black file:cursor-pointer transition-all">
+                                    <p class="text-[11px] text-gray-400 mt-2">* 10MB 이하의 이미지 파일(jpg, png)만 가능합니다.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <input type="text" id="edit-name" name="name"
+                                   placeholder="변경할 이름을 입력하세요"
+                                   class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-800 outline-none transition-all">
+                        </div>
+                        <div>
+                            <input type="email" id="edit-email" name="email"
+                                   placeholder="변경할 이메일을 입력하세요"
+                                   class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-800 outline-none transition-all">
+                        </div>
+                        <div>
+                            <input type="password" id="edit-password" name="password"
+                                   placeholder="변경할 새 비밀번호를 입력하세요 (미입력 시 기존 유지)"
+                                   class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-800 outline-none transition-all">
+                        </div>
+                        <div>
+                            <input type="password" id="edit-passwordConfirm" name="passwordConfirm"
+                                   placeholder="새 비밀번호를 한 번 더 입력하세요"
+                                   class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-800 outline-none transition-all">
+                        </div>
+                        <div class="flex justify-end gap-3 pt-6 border-t">
+                            <button type="button" th:onclick="|location.href='@{/members/me}'|"
+                                    class="px-6 py-3 bg-gray-100 text-gray-600 font-bold rounded-xl hover:bg-gray-200 transition-all">
+                                취소
+                            </button>
+                            <button type="submit"
+                                    class="px-8 py-3 bg-gray-800 text-white font-bold rounded-xl hover:bg-black transition-all shadow-lg">
+                                저장하기
+                            </button>
+                        </div>
+
+                    </form>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/profile.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            fetchProfileData((member) => {
+                const nameInput = document.getElementById('edit-name');
+                const emailInput = document.getElementById('edit-email');
+                const formImg = document.getElementById('form-img-preview');
+
+                if (nameInput) nameInput.value = member.name;
+                if (emailInput) emailInput.value = member.email;
+                if (formImg) {
+                    formImg.src = member.profileImage ? "/member/" + member.profileImage : "/images/default-profile.png";
+                }
+            });
+
+            initImagePreview();
+
+            const editForm = document.getElementById('editForm');
+            if (editForm) {
+                editForm.addEventListener('submit', handleProfileUpdate);
+            }
+        });
+    </script>
+</main>
+</html>

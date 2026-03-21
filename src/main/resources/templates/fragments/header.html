@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.w3.org/1999/xhtml" lang="ko">
+<nav th:fragment="mainHeader" class="bg-white shadow-sm px-10 h-20 flex items-center justify-between sticky top-0 z-50">
+    <div class="z-10 flex-1">
+    </div>
+
+    <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <a href="/" class="font-black text-xl md:text-2xl text-gray-900 tracking-tighter pointer-events-auto">
+            일정
+        </a>
+    </div>
+    <div sec:authorize="isAnonymous()" class="flex-1 flex items-center justify-end md:pr-10 gap-8">
+
+        <a href="/members/login" class="group relative flex flex-col items-center">
+            <i class="fa-solid fa-right-to-bracket text-gray-500 text-xl group-hover:text-black transition-colors"></i>
+            <span class="tooltip">로그인</span>
+        </a>
+
+        <a href="/members/signup" class="group relative flex flex-col items-center">
+            <i class="fa-solid fa-user-plus text-gray-500 text-xl group-hover:text-black transition-colors"></i>
+            <span class="tooltip">회원가입</span>
+        </a>
+
+    </div>
+    <div sec:authorize="isAuthenticated()" class="flex-1 flex items-center justify-end md:pr-10 gap-8">
+
+        <div class="relative group cursor-pointer flex items-center mt-0.5">
+            <i class="fa-solid fa-bell text-gray-500 text-lg group-hover:text-black transition-colors"></i>
+
+            <span class="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[9px] font-bold px-1 py-0.5 rounded-full shadow-sm leading-none">
+            13
+        </span>
+
+            <span class="tooltip">알림</span>
+        </div>
+
+        <div class="relative flex items-center">
+            <button id="profileButton" class="flex items-center gap-2 focus:outline-none group py-1">
+                <div class="w-8 h-8 rounded-full overflow-hidden shadow-sm border border-gray-100 group-hover:border-gray-300 transition-all">
+                    <img th:src="${#authentication.principal.profileImage ?: '/images/default-profile.png'}"
+                         alt="profile" class="w-full h-full object-cover">
+                </div>
+
+                <i class="fa-solid fa-chevron-down text-[9px] text-gray-400 group-hover:text-gray-600 pt-0.5"></i>
+            </button>
+
+            <div id="profileDropdown" class="hidden absolute top-full right-0 mt-2 w-48 bg-white rounded-xl shadow-2xl border border-gray-100 py-2 z-[999]">
+                <div class="px-4 py-3 border-b border-gray-50">
+                    <p class="text-xs text-gray-400 font-medium">접속 중인 계정</p>
+                    <p th:text="${#authentication.principal.username}" class="text-sm font-bold text-gray-800 truncate"></p>
+                </div>
+                <a href="/members/me" class="flex items-center gap-3 px-4 py-3 text-sm text-gray-600 hover:bg-gray-50 transition-colors">
+                    <i class="fa-solid fa-user text-gray-400 w-4"></i> 마이페이지
+                </a>
+                <div class="border-t border-gray-50 mt-1">
+                    <a href="/logout" class="flex items-center gap-3 px-4 py-3 text-sm text-red-500 hover:bg-red-50 transition-colors">
+                        <i class="fa-solid fa-right-from-bracket w-4"></i> 로그아웃
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const profileButton = document.getElementById('profileButton');
+        const profileDropdown = document.getElementById('profileDropdown');
+
+        profileButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            profileDropdown.classList.toggle('hidden');
+        });
+
+        window.addEventListener('click', () => {
+            if (!profileDropdown.classList.contains('hidden')) {
+                profileDropdown.classList.add('hidden');
+            }
+        });
+    </script>
+</nav>
+</html>

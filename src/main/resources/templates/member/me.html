@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/base-layout}">
+<main layout:fragment="content">
+    <div class="max-w-7xl mx-auto p-6">
+
+        <div class="flex flex-col md:flex-row gap-6">
+
+            <th:block th:replace="~{fragments/profile-sidebar :: menu('info')}"></th:block>
+
+
+            <div class="flex-1 flex flex-col gap-6">
+
+                <th:block th:replace="~{fragments/profile-sidebar :: summary('info')}"></th:block>
+
+
+
+            </div>
+        </div>
+    </div>
+    <script src="/js/profile.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            fetchProfileData();
+        });
+    </script>
+</main>
+
+</html>

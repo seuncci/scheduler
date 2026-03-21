@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @Controller
 @RequestMapping("/members")
 public class MemberViewController {
+
     @GetMapping("/login")
     public String loginPage() {
         return "/member/login";
@@ -15,5 +16,15 @@ public class MemberViewController {
     @GetMapping("/signup")
     public String signupForm() {
         return "/member/signup";
+    }
+
+    @GetMapping("/me")
+    public String profilePage() {
+        return "/member/me";
+    }
+
+    @GetMapping("/edit")
+    public String editPage() {
+        return "/member/edit";
     }
 }

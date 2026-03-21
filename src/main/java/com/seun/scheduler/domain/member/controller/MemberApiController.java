@@ -1,12 +1,14 @@
 package com.seun.scheduler.domain.member.controller;
 
 import com.seun.scheduler.domain.member.dto.MemberJoinRequest;
-import com.seun.scheduler.dto.*;
-import com.seun.scheduler.security.UserDetailsImpl;
-import com.seun.scheduler.service.UserService;
+import com.seun.scheduler.domain.member.dto.MemberProfileResponse;
+import com.seun.scheduler.domain.member.dto.MemberProfileUpdateRequest;
+import com.seun.scheduler.global.common.CommonResponse;
+import com.seun.scheduler.global.common.ResultCode;
+import com.seun.scheduler.domain.member.service.MemberService;
+import com.seun.scheduler.security.auth.CustomUserDetails;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -14,29 +16,38 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 
 @RestController
-@RequestMapping("/members")
+@RequestMapping("/api/members")
 @RequiredArgsConstructor
 public class MemberApiController {
-    private final UserService userService;
+
+    private final MemberService memberService;
 
     @PostMapping("/signup")
-    public ResponseEntity<String> join(@Valid @RequestBody MemberJoinRequest dto) {
-        userService.join(dto);
+    public CommonResponse<Void> join(@Valid @RequestBody MemberJoinRequest request) {
 
-        return ResponseEntity.ok("success");
+        memberService.join(request);
+
+        return CommonResponse.result(ResultCode.SIGNUP_SUCCESS);
     }
 
-    @PostMapping("/profile")
-    public ResponseEntity<CommonResponse<UserProfileResponse>> getUserProfile(@AuthenticationPrincipal UserDetailsImpl userDetails) {
-        return userService.getUser(userDetails.getUsername());
+    @GetMapping("/me")
+    public CommonResponse<MemberProfileResponse> getMyProfile(@AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        MemberProfileResponse profile = memberService.getMyProfile(userDetails.getUsername());
+
+        return CommonResponse.result(ResultCode.PROFILE_GET_SUCCESS, profile);
     }
 
-    @PatchMapping("/profile")
-    public ResponseEntity<CommonResponse<UserProfileResponse>> updateUserProfile(
-            @AuthenticationPrincipal UserDetailsImpl userDetails,
-            @Valid @RequestPart(value = "data") UpdateUserRequest request,
-            @RequestPart(value = "image", required = false) MultipartFile image
+    @PatchMapping("/me")
+    public CommonResponse<Void> updateProfile(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Valid @RequestPart(value = "data") MemberProfileUpdateRequest request,
+            @RequestPart(value = "image", required = false) MultipartFile profileImage
             ) throws IOException {
-        return userService.updateUser(userDetails.getUsername(), request, image);
+
+        memberService.updateProfile(userDetails.getUsername(), request, profileImage);
+
+        return CommonResponse.result(ResultCode.PROFILE_UPDATE_SUCCESS);
     }
+
 }
