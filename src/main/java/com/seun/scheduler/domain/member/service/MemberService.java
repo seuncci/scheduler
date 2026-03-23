@@ -1,6 +1,6 @@
 package com.seun.scheduler.domain.member.service;
 
-import com.seun.scheduler.domain.Member;
+import com.seun.scheduler.domain.member.entity.Member;
 import com.seun.scheduler.domain.member.dto.MemberJoinRequest;
 import com.seun.scheduler.domain.member.dto.MemberProfileResponse;
 import com.seun.scheduler.domain.member.dto.MemberProfileUpdateRequest;

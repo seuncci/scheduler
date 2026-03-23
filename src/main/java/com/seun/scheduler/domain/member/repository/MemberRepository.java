@@ -1,6 +1,6 @@
 package com.seun.scheduler.domain.member.repository;
 
-import com.seun.scheduler.domain.Member;
+import com.seun.scheduler.domain.member.entity.Member;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

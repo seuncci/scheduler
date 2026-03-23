@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/base-layout}">
+<main layout:fragment="content">
+  <div id="toast"
+       class="fixed top-[-100px] left-1/2 -translate-x-1/2 z-[10000] w-full max-w-sm transition-all duration-500 ease-in-out">
+    <div id="toast-container" class="mx-4 px-4 py-3 rounded-lg shadow-md flex items-center justify-center gap-2 border bg-white">
+      <i id="toast-icon" class="fa-solid"></i>
+      <span id="toast-message" class="font-medium text-sm text-center"></span>
+    </div>
+  </div>
+  <div class="max-w-7xl mx-auto p-6">
+
+    <div class="flex flex-col md:flex-row gap-6">
+
+      <th:block th:replace="~{fragments/profile-sidebar :: menu('group')}"></th:block>
+
+
+      <div class="flex-1 flex flex-col gap-6">
+
+        <th:block th:replace="~{fragments/profile-sidebar :: summary('info')}"></th:block>
+        <section class="bg-white p-8 rounded-2xl shadow-sm border border-gray-200 min-h-[500px]">
+
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+            <div>
+              <h3 class="text-xl font-bold text-gray-800">그룹 관리</h3>
+              <p class="text-xs text-gray-400 mt-1">참여 중인 그룹을 관리하고 정렬할 수 있습니다.</p>
+            </div>
+
+            <div class="flex items-center gap-3">
+              <div class="relative">
+                <select class="appearance-none bg-gray-50 border border-gray-200 text-gray-600 text-xs rounded-lg focus:ring-black focus:border-black block w-full pl-3 pr-8 py-2.5 transition-all cursor-pointer">
+                  <option value="recent">가입일순</option>
+                  <option value="name">이름순</option>
+                </select>
+                <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-gray-400 pointer-events-none"></i>
+              </div>
+
+              <button onclick="openModal()" class="bg-gray-800 hover:bg-black text-white text-sm font-medium px-5 py-2.5 rounded-lg transition-all shadow-sm flex items-center gap-2 shrink-0">
+                <i class="fa-solid fa-plus text-xs"></i> 새 그룹 생성
+              </button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div th:if="${groups.isEmpty()}" class="col-span-full py-32 text-center">
+              <div class="mb-4 text-gray-200">
+                <i class="fa-solid fa-folder-open text-4xl"></i>
+              </div>
+              <p class="text-gray-400 text-[13px] tracking-tight">참여 중인 그룹이 없습니다.</p>
+            </div>
+
+            <div th:each="group : ${groups}" class="bg-gray-50 p-6 rounded-xl border border-gray-100 shadow-inner group hover:border-gray-200 transition-all">
+              <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 rounded-lg bg-gray-100 text-gray-300 flex items-center justify-center text-xl">
+                  <i th:unless="${group.groupImage != null}" class="fa-solid fa-users"></i>
+                </div>
+                <span th:text="|멤버 ${group.memberCount}명|" class="text-xs font-bold text-gray-400 group-hover:text-gray-500"></span>
+              </div>
+              <h4 th:text="${group.name}" class="text-lg font-bold text-gray-800 mb-1"></h4>
+              <p th:text="${group.description}" class="text-xs text-gray-400 font-normal mb-4"></p>
+              <div class="flex items-center justify-between text-xs text-gray-400 pt-4 border-t border-gray-100">
+                <span>최근 활동: 2시간 전</span>
+                <button class="text-gray-500 hover:text-black font-medium">관리 <i class="fa-solid fa-angle-right text-[10px]"></i></button>
+              </div>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10 flex-1">
+          </div>
+
+          <div class="flex items-center justify-center pt-10 border-t border-gray-100 mt-auto">
+
+            <nav class="flex items-center gap-2"
+                 th:if="${!groups.isEmpty()}"
+                 th:with="start=${(groups.number/5)*5 + 1}, end=${((start + 4) < groups.totalPages) ? (start + 4) : groups.totalPages}">
+
+              <a th:href="@{/member/me/groups(page=${groups.number - 1})}"
+                 th:classappend="${groups.first} ? 'pointer-events-none opacity-50'"
+                 class="w-9 h-9 flex items-center justify-center rounded-lg border border-gray-200 text-gray-400 hover:bg-gray-50 transition-all">
+                <i class="fa-solid fa-angle-left text-xs"></i>
+              </a>
+
+              <th:block th:each="page : ${#numbers.sequence(start, end)}">
+                <a th:href="@{/member/me/groups(page=${page - 1})}"
+                   th:text="${page}"
+                   th:classappend="${page == groups.number + 1} ? 'bg-gray-800 text-white shadow-md' : 'border-transparent text-gray-500 hover:border-gray-200 hover:bg-gray-50'"
+                   class="w-9 h-9 flex items-center justify-center rounded-lg text-xs font-bold transition-all">
+                </a>
+              </th:block>
+
+              <a th:href="@{/member/me/groups(page=${groups.number + 1})}"
+                 th:classappend="${groups.last} ? 'pointer-events-none opacity-50'"
+                 class="w-9 h-9 flex items-center justify-center rounded-lg border border-gray-200 text-gray-400 hover:bg-gray-50 transition-all">
+                <i class="fa-solid fa-angle-right text-xs"></i>
+              </a>
+            </nav>
+
+          </div>
+
+        </section>
+
+
+      </div>
+    </div>
+  </div>
+  <div id="groupModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-gray-100 animate-in fade-in zoom-in duration-300 overflow-hidden">
+
+      <div class="px-8 py-6 bg-gray-50/50 border-b border-gray-100 flex items-center justify-between">
+        <h3 class="text-xl font-bold text-gray-900">새 그룹 생성</h3>
+        <button onclick="closeModal()" class="text-gray-400 hover:text-black transition-colors">
+          <i class="fa-solid fa-xmark text-xl"></i>
+        </button>
+      </div>
+
+      <form class="p-8 space-y-6">
+        <div>
+          <label class="block text-xs font-bold text-gray-500 mb-2 ml-1">그룹 대표 이미지</label>
+          <div class="flex items-center gap-5">
+            <div class="w-20 h-20 rounded-xl bg-gray-100 border border-gray-200 flex items-center justify-center shrink-0 overflow-hidden">
+              <img id="groupPreview" src="" class="hidden w-full h-full object-cover">
+              <i id="defaultIcon" class="fa-solid fa-users text-3xl text-gray-300"></i>
+            </div>
+            <div class="flex-1">
+              <label class="relative cursor-pointer">
+                <input type="file" id="groupImageInput" name="groupImage" accept="image/*" class="peer hidden" onchange="previewImage(this)">
+                <div class="px-5 py-3 bg-white border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:border-gray-400 hover:bg-gray-50 transition-all inline-flex items-center gap-2 shadow-sm">
+                  <i class="fa-solid fa-cloud-arrow-up text-gray-400"></i> 이미지 업로드
+                </div>
+              </label>
+              <p class="text-[11px] text-gray-400 mt-2.5 ml-0.5">JPG, PNG (최대 10MB)</p>
+            </div>
+            <button type="button" id="removeImageBtn" onclick="removeImage()" class="hidden text-xs font-medium text-red-500 hover:text-red-600 transition-colors shrink-0">삭제</button>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-500 mb-2 ml-1">그룹 이름</label>
+          <input type="text" name="name" placeholder="예: 서비스 개발팀" class="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black focus:bg-white focus:border-black outline-none transition-all text-sm placeholder:text-gray-300">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-500 mb-2 ml-1">그룹 설명</label>
+          <textarea rows="3" name="description" placeholder="그룹의 목적이나 활동 내용을 간단히 적어주세요." class="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black focus:bg-white focus:border-black outline-none transition-all text-sm resize-none placeholder:text-gray-300"></textarea>
+        </div>
+
+        <div class="flex items-center gap-3 pt-8 border-t border-gray-100">
+          <button type="button" onclick="closeModal()" class="flex-1 py-3.5 border border-gray-200 text-gray-500 font-bold rounded-xl hover:bg-gray-50 transition-all text-sm">취소</button>
+          <button type="submit" class="flex-[2] py-3.5 bg-gray-900 text-white font-bold rounded-xl hover:bg-black shadow-lg shadow-gray-200 transition-all text-sm">그룹 생성하기</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <script src="/js/profile.js"></script>
+  <script th:inline="javascript">
+    document.querySelector('#groupModal form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      createGroup();
+    });
+
+    async function createGroup() {
+        const form = document.querySelector('#groupModal form');
+        const name = form.querySelector('input[type="text"]').value;
+        const description = form.querySelector('textarea').value;
+        const imageInput = document.getElementById('groupImageInput');
+
+        if (!name.trim()) {
+            showToast('error', '이름을 입력하세요.');
+            return;
+        }
+
+        const formData = new FormData();
+
+        const groupData = {
+            name: name,
+            description: description
+        };
+
+        formData.append("data", new Blob([JSON.stringify(groupData)], {
+            type: "application/json"
+        }));
+
+        if (imageInput.files && imageInput.files[0]) {
+            formData.append("image", imageInput.files[0]);
+        }
+
+        try {
+            const response = await fetch('/api/groups', {
+                method: 'POST',
+                body: formData,
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                showToast('success', result.message);
+
+                setTimeout(() => {
+                    location.reload();
+                }, 2000);
+            } else {
+                showToast('error', result.message);
+            }
+        } catch (error) {
+            console.error("Error:", error);
+            alert("서버 통신 중 오류가 발생했습니다.");
+        }
+    }
+
+    function openModal() {
+        const modal = document.getElementById('groupModal');
+        if(modal) {
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+    }
+
+    function closeModal() {
+        const modal = document.getElementById('groupModal');
+        if(modal) {
+            modal.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+    }
+
+    function previewImage(input) {
+        const preview = document.getElementById('groupPreview');
+        const defaultIcon = document.getElementById('defaultIcon');
+        const removeBtn = document.getElementById('removeImageBtn');
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+                preview.classList.remove('hidden');
+                defaultIcon.classList.add('hidden');
+                removeBtn.classList.remove('hidden');
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function removeImage() {
+        const input = document.getElementById('groupImageInput');
+        const preview = document.getElementById('groupPreview');
+        const defaultIcon = document.getElementById('defaultIcon');
+        const removeBtn = document.getElementById('removeImageBtn');
+        input.value = "";
+        preview.src = "";
+        preview.classList.add('hidden');
+        defaultIcon.classList.remove('hidden');
+        removeBtn.classList.add('hidden');
+    }
+  </script>
+</main>
+
+</html>

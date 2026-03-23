@@ -33,7 +33,7 @@
                             <div class="flex items-center gap-6 p-4 bg-gray-50 rounded-2xl border border-dashed border-gray-300">
                                 <div class="relative w-20 h-20 flex-shrink-0">
                                     <img id="form-img-preview"
-                                         src="/images/default-profile.png"
+                                         th:src="@{|${#strings.isEmpty(member.profileImage) ? '/images/default-profile.png' : '/member/' + member.profileImage}|}"
                                          alt="preview"
                                          class="w-full h-full object-cover rounded-xl shadow-sm border border-white">
                                     <span id="form-img-new-badge"
@@ -54,12 +54,12 @@
                             </div>
                         </div>
                         <div>
-                            <input type="text" id="edit-name" name="name"
+                            <input type="text" id="edit-name" name="name" th:value="${member.name}"
                                    placeholder="변경할 이름을 입력하세요"
                                    class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-800 outline-none transition-all">
                         </div>
                         <div>
-                            <input type="email" id="edit-email" name="email"
+                            <input type="email" id="edit-email" name="email" th:value="${member.email}"
                                    placeholder="변경할 이메일을 입력하세요"
                                    class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-800 outline-none transition-all">
                         </div>
@@ -93,18 +93,6 @@
     <script src="/js/profile.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", function () {
-
-            fetchProfileData((member) => {
-                const nameInput = document.getElementById('edit-name');
-                const emailInput = document.getElementById('edit-email');
-                const formImg = document.getElementById('form-img-preview');
-
-                if (nameInput) nameInput.value = member.name;
-                if (emailInput) emailInput.value = member.email;
-                if (formImg) {
-                    formImg.src = member.profileImage ? "/member/" + member.profileImage : "/images/default-profile.png";
-                }
-            });
 
             initImagePreview();
 

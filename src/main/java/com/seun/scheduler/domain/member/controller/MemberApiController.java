@@ -30,14 +30,6 @@ public class MemberApiController {
         return CommonResponse.result(ResultCode.SIGNUP_SUCCESS);
     }
 
-    @GetMapping("/me")
-    public CommonResponse<MemberProfileResponse> getMyProfile(@AuthenticationPrincipal CustomUserDetails userDetails) {
-
-        MemberProfileResponse profile = memberService.getMyProfile(userDetails.getUsername());
-
-        return CommonResponse.result(ResultCode.PROFILE_GET_SUCCESS, profile);
-    }
-
     @PatchMapping("/me")
     public CommonResponse<Void> updateProfile(
             @AuthenticationPrincipal CustomUserDetails userDetails,

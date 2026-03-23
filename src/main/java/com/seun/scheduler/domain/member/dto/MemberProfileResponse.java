@@ -1,6 +1,6 @@
 package com.seun.scheduler.domain.member.dto;
 
-import com.seun.scheduler.domain.Member;
+import com.seun.scheduler.domain.member.entity.Member;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;

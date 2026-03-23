@@ -5,12 +5,12 @@
       layout:decorate="~{layouts/base-layout}">
 
 <main layout:fragment="content" class="flex items-center justify-center min-h-[calc(100vh-80px)]">
-<div id="error-toast"
+<div id="toast"
      class="fixed top-[-100px] left-1/2 -translate-x-1/2 z-50 w-full max-w-sm transition-all duration-500 ease-in-out">
-  <div class="mx-4 bg-red-50 border border-red-200 text-red-400 px-4 py-3 rounded-lg shadow-md flex items-center justify-center gap-2">
-    <i class="fa-solid fa-circle-exclamation"></i>
-    <span class="font-medium text-sm"></span>
-  </div>
+    <div id="toast-container" class="mx-4 px-4 py-3 rounded-lg shadow-md flex items-center justify-center gap-2 border">
+        <i id="toast-icon" class="fa-solid"></i>
+        <span id="toast-message" class="font-medium text-sm text-center"></span>
+    </div>
 </div>
 <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md border border-gray-200 flex flex-col">
 
@@ -66,14 +66,13 @@
         </button>
     </form>
 </div>
+<script src="/js/profile.js"></script>
+
 <script>
 
 document.getElementById('signupForm').addEventListener('submit', async function(e) {
     
     e.preventDefault();
-
-    const toast = document.getElementById('error-toast');
-    const messageSpan = toast.querySelector('span');
     
     const form = e.target;
     const submitBtn = form.querySelector('button[type="submit"]');
@@ -83,16 +82,7 @@ document.getElementById('signupForm').addEventListener('submit', async function(
 
     if (data.password !== data.passwordConfirm) {
 
-        messageSpan.textContent = '비밀번호와 비밀번호 확인이 일치하지 않습니다.';
-
-        setTimeout(() => {
-              toast.style.top = '20px';
-          }, 100);
-
-          setTimeout(() => {
-              toast.style.top = '-100px';
-          }, 3000);
-
+        showToast('error', '비밀번호가 일치하지 않습니다.');
         return;
     }
 
@@ -106,21 +96,17 @@ document.getElementById('signupForm').addEventListener('submit', async function(
         });
 
         const result = await response.json();
-            
-        messageSpan.textContent = result.message;
 
-        setTimeout(() => {
-            toast.style.top = '20px';
-        }, 100);
+        if (result.code === 2002) {
 
-        setTimeout(() => {
-            toast.style.top = '-100px';
+            showToast('success', result.message);
 
-            if (result.code === 2002) {
+            setTimeout(() => {
                 location.href = "/members/login";
-            }
-
-        }, 2000);
+            }, 2000);
+        } else {
+            showToast('error', result.message);
+        }
         
     } catch (error) {
         console.error("Network Error:", error);
