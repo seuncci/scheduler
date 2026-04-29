@@ -37,7 +37,7 @@
         <div class="relative flex items-center">
             <button id="profileButton" class="flex items-center gap-2 focus:outline-none group py-1">
                 <div class="w-8 h-8 rounded-full overflow-hidden shadow-sm border border-gray-100 group-hover:border-gray-300 transition-all">
-                    <img th:src="${#authentication.principal.profileImage ?: '/images/default-profile.png'}"
+                    <img th:src="@{|${#authentication.principal.profileImage == null ? '/images/default-profile.png' : '/member/' + #authentication.principal.profileImage}|}"
                          alt="profile" class="w-full h-full object-cover">
                 </div>
 

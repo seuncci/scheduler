@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/base-layout}">
+<main layout:fragment="content">
+    <div id="toast"
+         class="fixed top-[-100px] left-1/2 -translate-x-1/2 z-[10000] w-full max-w-sm transition-all duration-500 ease-in-out">
+        <div id="toast-container" class="mx-4 px-4 py-3 rounded-lg shadow-md flex items-center justify-center gap-2 border bg-white">
+            <i id="toast-icon" class="fa-solid"></i>
+            <span id="toast-message" class="font-medium text-sm text-center"></span>
+        </div>
+    </div>
+    <div class="min-h-screen bg-gray-50 flex items-center justify-center p-4 pb-32">
+
+        <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in duration-300 border border-gray-100">
+
+            <div class="px-8 py-6 bg-gray-50 border-b border-gray-100 text-center">
+                <h3 class="text-lg font-bold text-gray-900">그룹 초대 수락</h3>
+            </div>
+
+            <div class="p-8 space-y-6">
+
+                <div class="text-center">
+                    <div class="w-20 h-20 mx-auto mb-6 shadow-sm overflow-hidden rounded-2xl bg-gray-100 flex items-center justify-center">
+                        <img th:if="${group.groupImage != null}"
+                             th:src="${group.groupImage}"
+                             class="w-full h-full object-cover"
+                             alt="그룹 썸네일">
+                        <i th:unless="${group.groupImage != null}"
+                           class="fa-solid fa-users text-3xl text-gray-300"></i>
+                    </div>
+                    <label class="block text-[12px] font-bold text-gray-600 uppercase tracking-tight mb-2">초대받은 그룹</label>
+                    <h2 class="text-xl font-bold text-gray-900 tracking-tight mb-3" th:text="${group.name}"></h2>
+                    <p class="text-sm text-gray-400 font-medium leading-relaxed" th:text="${not #strings.isEmpty(group.description)} ? ${group.description} : '반갑습니다! 그룹의 멤버로 초대되었습니다. 팀원들과 함께 일정을 공유해보세요.'">
+                    </p>
+                </div>
+
+                <div class="py-1 flex justify-center">
+                    <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-50/50 border border-indigo-100/50 rounded-lg">
+                        <div class="flex -space-x-1.5 mr-1">
+                            <div class="w-5 h-5 rounded-full border border-white bg-gray-200"></div>
+                            <div class="w-5 h-5 rounded-full border border-white bg-gray-300"></div>
+                        </div>
+                        <span class="text-[12px] font-bold text-indigo-600 tracking-tighter" th:text="|${group.memberCount}명의 멤버 참여 중|"></span>
+                        <i class="fa-solid fa-circle-check text-[10px] text-indigo-400/80"></i>
+                    </div>
+                </div>
+
+                <div class="flex gap-3 pt-2">
+                    <a href="/" class="flex-1 py-3 text-gray-400 font-bold text-sm text-center flex items-center justify-center hover:text-gray-600 transition-colors">취소</a>
+
+                    <form action="/groups/join/process" method="POST" class="flex-[2]">
+                        <input type="hidden" name="code" th:value="${code}">
+                        <button type="submit" class="w-full py-3 bg-gray-900 hover:bg-black text-white font-bold rounded-xl shadow-lg transition-all text-sm">
+                            초대 수락하고 가입하기
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <script src="/js/profile.js"></script>
+    <script src="/js/group.js"></script>
+    <script th:inline="javascript">
+        document.querySelector('form[action="/groups/join/process"]').addEventListener('submit', function(e) {
+            e.preventDefault();
+            joinGroup();
+        });
+
+        async function joinGroup() {
+            const code = document.querySelector('input[name="code"]').value;
+
+            try {
+                const params = new URLSearchParams();
+                params.append('code', code);
+
+                const response = await fetch('/api/groups/join', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: params
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showToast('success', result.message);
+
+                    setTimeout(() => {
+                        location.href = '/members/me/groups';
+                    }, 2000);
+                } else {
+                    showToast('error', result.message);
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                showToast('error', '서버와의 통신에 실패했습니다.');
+            }
+        }
+    </script>
+</main>
+</html>

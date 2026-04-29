@@ -41,10 +41,16 @@ public class Group {
 
     @CreatedDate
     @Column(updatable = false)
-    private LocalDateTime createdTime;
+    private LocalDateTime createdDate;
 
     @LastModifiedDate
     private LocalDateTime modifiedDate;
+
+    public void updateGroupInfo(String name, String description) {
+
+        this.name = name;
+        this.description = description;
+    }
 
     public void updateGroupImage(String groupImage) {
         this.groupImage = groupImage;

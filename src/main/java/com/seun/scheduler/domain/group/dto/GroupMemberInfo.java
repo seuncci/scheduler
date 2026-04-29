@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class GroupMemberInfo {
 
-    private String memberId;
+    private Long id;
     private String name;
     private String email;
     private String profileImage;

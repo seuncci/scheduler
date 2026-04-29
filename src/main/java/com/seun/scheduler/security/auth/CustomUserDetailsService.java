@@ -1,7 +1,7 @@
 package com.seun.scheduler.security.auth;
 
-import com.seun.scheduler.domain.Member;
-import com.seun.scheduler.repository.MemberRepository;
+import com.seun.scheduler.domain.member.entity.Member;
+import com.seun.scheduler.domain.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

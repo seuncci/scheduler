@@ -53,6 +53,20 @@
 
 <main layout:fragment="content">
 </main>
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    const errorMsg = /*[[${errorMessage}]]*/ null;
 
+    if (errorMsg) {
+        window.addEventListener('load', function() {
+            if (typeof showToast === 'function') {
+                showToast('error', errorMsg);
+            } else {
+                console.error("showToast 함수가 정의되지 않았습니다. profile.js 경로를 확인하세요.");
+            }
+        });
+    }
+    /*]]>*/
+</script>
 </body>
 </html>

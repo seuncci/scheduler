@@ -1,6 +1,6 @@
 package com.seun.scheduler.security;
 
-import com.seun.scheduler.domain.Member;
+import com.seun.scheduler.domain.member.entity.Member;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;

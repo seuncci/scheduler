@@ -31,9 +31,9 @@
 
             <div class="flex items-center gap-3">
               <div class="relative">
-                <select class="appearance-none bg-gray-50 border border-gray-200 text-gray-600 text-xs rounded-lg focus:ring-black focus:border-black block w-full pl-3 pr-8 py-2.5 transition-all cursor-pointer">
-                  <option value="recent">가입일순</option>
-                  <option value="name">이름순</option>
+                <select onchange="changeSort(this.value)" class="appearance-none bg-gray-50 border border-gray-200 text-gray-600 text-xs rounded-lg focus:ring-black focus:border-black block w-full pl-3 pr-8 py-2.5 transition-all cursor-pointer">
+                  <option value="createdDate,desc" th:selected="${param.sort == null or param.sort[0] == 'createdDate,desc'}">가입일순</option>
+                  <option value="g.name,asc" th:selected="${param.sort != null and param.sort[0] == 'g.name,asc'}">이름순</option>
                 </select>
                 <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-gray-400 pointer-events-none"></i>
               </div>
@@ -55,6 +55,10 @@
             <div th:each="group : ${groups}" class="bg-gray-50 p-6 rounded-xl border border-gray-100 shadow-inner group hover:border-gray-200 transition-all">
               <div class="flex items-center justify-between mb-4">
                 <div class="w-12 h-12 rounded-lg bg-gray-100 text-gray-300 flex items-center justify-center text-xl">
+                  <img th:if="${group.groupImage != null}"
+                       th:src="@{|/group/${group.groupImage}|}"
+                       class="w-full h-full object-cover"
+                       alt="그룹 로고">
                   <i th:unless="${group.groupImage != null}" class="fa-solid fa-users"></i>
                 </div>
                 <span th:text="|멤버 ${group.memberCount}명|" class="text-xs font-bold text-gray-400 group-hover:text-gray-500"></span>
@@ -63,34 +67,34 @@
               <p th:text="${group.description}" class="text-xs text-gray-400 font-normal mb-4"></p>
               <div class="flex items-center justify-between text-xs text-gray-400 pt-4 border-t border-gray-100">
                 <span>최근 활동: 2시간 전</span>
-                <button class="text-gray-500 hover:text-black font-medium">관리 <i class="fa-solid fa-angle-right text-[10px]"></i></button>
+                <button th:onclick="|location.href='@{/members/me/groups/{id}(id=${group.id})}'|" class="text-gray-500 hover:text-black font-medium">관리 <i class="fa-solid fa-angle-right text-[10px]"></i></button>
               </div>
             </div>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10 flex-1">
           </div>
 
-          <div class="flex items-center justify-center pt-10 border-t border-gray-100 mt-auto">
+          <div th:if="${groups.totalPages > 0}" class="flex items-center justify-center pt-10 border-t border-gray-100 mt-auto">
 
             <nav class="flex items-center gap-2"
                  th:if="${!groups.isEmpty()}"
                  th:with="start=${(groups.number/5)*5 + 1}, end=${((start + 4) < groups.totalPages) ? (start + 4) : groups.totalPages}">
 
-              <a th:href="@{/member/me/groups(page=${groups.number - 1})}"
+              <a th:href="@{/members/me/groups(page=${groups.number - 1})}"
                  th:classappend="${groups.first} ? 'pointer-events-none opacity-50'"
                  class="w-9 h-9 flex items-center justify-center rounded-lg border border-gray-200 text-gray-400 hover:bg-gray-50 transition-all">
                 <i class="fa-solid fa-angle-left text-xs"></i>
               </a>
 
               <th:block th:each="page : ${#numbers.sequence(start, end)}">
-                <a th:href="@{/member/me/groups(page=${page - 1})}"
+                <a th:href="@{/members/me/groups(page=${page - 1})}"
                    th:text="${page}"
                    th:classappend="${page == groups.number + 1} ? 'bg-gray-800 text-white shadow-md' : 'border-transparent text-gray-500 hover:border-gray-200 hover:bg-gray-50'"
                    class="w-9 h-9 flex items-center justify-center rounded-lg text-xs font-bold transition-all">
                 </a>
               </th:block>
 
-              <a th:href="@{/member/me/groups(page=${groups.number + 1})}"
+              <a th:href="@{/members/me/groups(page=${groups.number + 1})}"
                  th:classappend="${groups.last} ? 'pointer-events-none opacity-50'"
                  class="w-9 h-9 flex items-center justify-center rounded-lg border border-gray-200 text-gray-400 hover:bg-gray-50 transition-all">
                 <i class="fa-solid fa-angle-right text-xs"></i>
@@ -117,7 +121,7 @@
 
       <form class="p-8 space-y-6">
         <div>
-          <label class="block text-xs font-bold text-gray-500 mb-2 ml-1">그룹 대표 이미지</label>
+          <label class="block text-[12px] font-bold text-gray-600 mb-2 ml-1 tracking-tight">그룹 대표 이미지</label>
           <div class="flex items-center gap-5">
             <div class="w-20 h-20 rounded-xl bg-gray-100 border border-gray-200 flex items-center justify-center shrink-0 overflow-hidden">
               <img id="groupPreview" src="" class="hidden w-full h-full object-cover">
@@ -137,12 +141,12 @@
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-gray-500 mb-2 ml-1">그룹 이름</label>
+          <label class="block text-[12px] font-bold text-gray-600 mb-2 ml-1 tracking-tight">그룹 이름</label>
           <input type="text" name="name" placeholder="예: 서비스 개발팀" class="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black focus:bg-white focus:border-black outline-none transition-all text-sm placeholder:text-gray-300">
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-gray-500 mb-2 ml-1">그룹 설명</label>
+          <label class="block text-[12px] font-bold text-gray-600 mb-2 ml-1 tracking-tight">그룹 설명</label>
           <textarea rows="3" name="description" placeholder="그룹의 목적이나 활동 내용을 간단히 적어주세요." class="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black focus:bg-white focus:border-black outline-none transition-all text-sm resize-none placeholder:text-gray-300"></textarea>
         </div>
 
@@ -251,6 +255,14 @@
         preview.classList.add('hidden');
         defaultIcon.classList.remove('hidden');
         removeBtn.classList.add('hidden');
+    }
+
+    function changeSort(sortValue) {
+        const urlParams = new URLSearchParams(window.location.search);
+        urlParams.set('sort', sortValue);
+        urlParams.set('page', '0');
+
+        window.location.href = window.location.pathname + '?' + urlParams.toString();
     }
   </script>
 </main>

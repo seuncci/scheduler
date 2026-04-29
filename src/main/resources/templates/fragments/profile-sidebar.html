@@ -2,11 +2,19 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <aside th:fragment="menu(activeMenu)" class="w-full md:w-1/3 lg:w-1/4 flex flex-col gap-2">
   <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 h-fit">
-    <button class="w-full bg-gray-600 hover:bg-black text-white py-3 px-5 rounded-lg mb-2 text-left shadow-md">
-      회원정보
+    <button th:onclick="|location.href='@{/members/me}'|"
+            class="w-full py-3 px-5 rounded-lg mb-2 text-left transition-all"
+            th:classappend="${activeMenu == 'info' || activeMenu == 'edit'}
+                        ? 'bg-gray-600 text-white shadow-md'
+                        : 'bg-gray-50 text-gray-500 hover:bg-gray-100'">
+      내 프로필
     </button>
-    <button class="w-full bg-gray-50 text-gray-500 font-medium py-3 px-5 rounded-lg text-left hover:bg-gray-100 transition-all">
-      기타
+    <button th:onclick="|location.href='@{/members/me/groups}'|"
+            class="w-full py-3 px-5 rounded-lg mb-2 text-left transition-all"
+            th:classappend="${activeMenu == 'group'}
+                        ? 'bg-gray-600 text-white shadow-md'
+                        : 'bg-gray-50 text-gray-500 hover:bg-gray-100'">
+      내 그룹
     </button>
   </div>
 </aside>
@@ -14,12 +22,12 @@
 <section th:fragment="summary(activeMenu)" class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex items-center justify-between">
   <div class="flex items-center gap-5">
     <div class="w-16 h-16 rounded-full overflow-hidden border border-gray-100 shadow-sm">
-      <img id="profile-img" src=""
+      <img th:src="@{|${#strings.isEmpty(member.profileImage) ? '/images/default-profile.png' : '/member/' + member.profileImage}|}"
            alt="profile" class="w-full h-full object-cover">
     </div>
     <div>
-      <h2 id="profile-name" class="text-lg font-bold text-gray-800 leading-tight"></h2>
-      <p id="profile-email" class="text-xs text-gray-400 font-normal"></p>
+      <h2 th:text="${member.name}" class="text-lg font-bold text-gray-800 leading-tight"></h2>
+      <p th:text="${member.email}" class="text-xs text-gray-400 font-normal"></p>
     </div>
   </div>
   <button th:if="${activeMenu == 'info'}"

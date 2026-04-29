@@ -1,7 +1,3 @@
-document.addEventListener("DOMContentLoaded", function () {
-    fetchProfileData();
-});
-
 async function fetchProfileData(callback) {
     try {
         const response = await fetch('/api/members/me', {
