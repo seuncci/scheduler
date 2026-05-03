@@ -26,12 +26,22 @@ public enum ResultCode {
     INVITE_LINK_CREATE_SUCCESS(HttpStatus.CREATED, 2008, "초대 링크가 생성되었습니다."),
     INVITE_LINK_DELETE_SUCCESS(HttpStatus.OK, 2009, "초대 링크가 삭제되었습니다."),
     GROUP_JOIN_SUCCESS(HttpStatus.CREATED, 2010, "그룹에 가입되었습니다."),
+    GROUP_MEMBER_KICK_SUCCESS(HttpStatus.OK, 2011, "해당 멤버를 그룹에서 내보냈습니다."),
+    GROUP_LEAVE_SUCCESS(HttpStatus.OK, 2012, "그룹에서 탈퇴되었습니다."),
+    GROUP_DELEGATE_SUCCESS(HttpStatus.OK, 2013, "관리자 권한이 위임되었습니다."),
+    GROUP_DELETE_SUCCESS(HttpStatus.OK, 2014, "그룹이 삭제되었습니다."),
 
     GROUP_NOT_FOUND(HttpStatus.NOT_FOUND, 4015, "존재하지 않는 그룹입니다."),
     NOT_GROUP_ADMIN(HttpStatus.FORBIDDEN, 4016, "그룹 수정 권한이 없습니다."),
     INVALID_INVITE_LINK(HttpStatus.BAD_REQUEST, 4017, "유효하지 않거나 이미 삭제된 링크입니다."),
     EXCEED_INVITE_LINK_LIMIT(HttpStatus.BAD_REQUEST, 4018, "생성 가능한 초대 링크 개수를 초과했습니다."),
     ALREADY_GROUP_MEMBER(HttpStatus.BAD_REQUEST, 4019, "이미 가입된 그룹입니다."),
+    BANNED_GROUP_MEMBER(HttpStatus.FORBIDDEN, 4020, "해당 그룹에서 추방되어 재가입이 불가능합니다."),
+    NOT_GROUP_MEMBER(HttpStatus.BAD_REQUEST, 4021, "해당 그룹의 멤버가 아닙니다."),
+    CANNOT_KICK_SELF(HttpStatus.BAD_REQUEST, 4022, "자기 자신을 내보낼 수 없습니다."),
+    ADMIN_CANNOT_LEAVE(HttpStatus.BAD_REQUEST, 4023, "관리자는 그룹을 탈퇴할 수 없습니다."),
+    CANNOT_DELEGATE_SELF(HttpStatus.BAD_REQUEST, 4024, "자기 자신에게 관리자 권한을 위임할 수 없습니다."),
+    GROUP_HAS_MEMBERS(HttpStatus.BAD_REQUEST, 4025, "그룹원이 남아있는 그룹은 삭제할 수 없습니다."),
 
     // 회원 관련 코드
     EMPTY_MEMBER_ID(HttpStatus.BAD_REQUEST, 4001, "아이디를 입력하세요."),

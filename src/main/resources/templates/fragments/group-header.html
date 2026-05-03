@@ -23,13 +23,21 @@
             </div>
         </div>
 
-        <div class="flex items-center gap-2" th:if="${group.role.name == '관리자'}">
-            <button onclick="openEditModal()" class="px-4 py-2.5 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all text-sm flex items-center gap-2 shadow-sm">
-                <i class="fa-solid fa-pen-to-square text-gray-400"></i> 정보 수정
-            </button>
-            <button onclick="openDeleteConfirm()" class="px-4 py-2.5 bg-red-50 text-red-500 font-bold rounded-xl hover:bg-red-100 transition-all text-sm flex items-center gap-2 border border-red-100">
-                <i class="fa-solid fa-trash-can"></i> 그룹 삭제
-            </button>
+        <div class="flex items-center gap-2">
+            <th:block th:if="${group.role.name == '관리자'}">
+                <button onclick="openEditModal()" class="px-4 py-2.5 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all text-sm flex items-center gap-2 shadow-sm">
+                    <i class="fa-solid fa-pen-to-square text-gray-400"></i> 정보 수정
+                </button>
+                <button onclick="openDeleteConfirm()" class="px-4 py-2.5 bg-red-50 text-red-500 font-bold rounded-xl hover:bg-red-100 transition-all text-sm flex items-center gap-2 border border-red-100">
+                    <i class="fa-solid fa-trash-can"></i> 그룹 삭제
+                </button>
+            </th:block>
+
+            <th:block th:unless="${group.role.name == '관리자'}">
+                <button onclick="openLeaveConfirm()" class="px-4 py-2.5 bg-white border border-red-100 text-red-500 font-bold rounded-xl hover:bg-red-50 transition-all text-sm flex items-center gap-2 shadow-sm">
+                    <i class="fa-solid fa-door-open"></i> 그룹 탈퇴
+                </button>
+            </th:block>
         </div>
     </div>
 
@@ -37,22 +45,24 @@
         <a th:href="@{/members/me/groups/{id}(id=${group.id})}"
            th:classappend="${currentTab == 'members'} ? 'text-black border-black font-bold border-b-2' : 'text-gray-400 border-transparent font-medium hover:text-gray-600 hover:border-gray-200'"
            class="pb-4 text-sm whitespace-nowrap transition-all cursor-pointer border-b-2">
-            멤버 관리
+            <span th:text="${group.role.name == '관리자'} ? '멤버 관리' : '멤버 목록'"></span>
         </a>
 
         <button class="pb-4 text-sm font-medium text-gray-400 hover:text-gray-600 border-b-2 border-transparent hover:border-gray-200 whitespace-nowrap transition-all">
             그룹 일정 <span class="ml-1 text-[10px] bg-indigo-50 text-indigo-500 px-1.5 py-0.5 rounded-full">3</span>
         </button>
 
-        <a th:href="@{/members/me/groups/{id}/invitation-links(id=${group.id})}"
-           th:classappend="${currentTab == 'invitation'} ? 'text-black border-black font-bold border-b-2' : 'text-gray-400 border-transparent font-medium hover:text-gray-600 hover:border-gray-200'"
-           class="pb-4 text-sm whitespace-nowrap transition-all cursor-pointer border-b-2">
-            초대 링크 관리
-        </a>
+        <th:block th:if="${group.role.name == '관리자'}">
+            <a th:href="@{/members/me/groups/{id}/invitation-links(id=${group.id})}"
+               th:classappend="${currentTab == 'invitation'} ? 'text-black border-black font-bold border-b-2' : 'text-gray-400 border-transparent font-medium hover:text-gray-600 hover:border-gray-200'"
+               class="pb-4 text-sm whitespace-nowrap transition-all cursor-pointer border-b-2">
+                초대 링크 관리
+            </a>
 
-        <button class="pb-4 text-sm font-medium text-gray-400 hover:text-gray-600 border-b-2 border-transparent hover:border-gray-200 whitespace-nowrap transition-all">
-            활동 로그
-        </button>
+            <button class="pb-4 text-sm font-medium text-gray-400 hover:text-gray-600 border-b-2 border-transparent hover:border-gray-200 whitespace-nowrap transition-all">
+                활동 로그
+            </button>
+        </th:block>
     </div>
     <div id="deleteConfirmModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl p-8 text-center animate-in fade-in zoom-in duration-200">
@@ -63,7 +73,20 @@
             <p class="text-sm text-gray-400 leading-relaxed mb-8">그룹 내 모든 데이터와 활동 내역이 영구적으로 삭제되며, 이 작업은 되돌릴 수 없습니다.</p>
             <div class="flex gap-3">
                 <button onclick="closeDeleteConfirm()" class="flex-1 py-3 bg-gray-50 text-gray-500 font-bold rounded-xl hover:bg-gray-100 transition-all text-sm">취소</button>
-                <button class="flex-1 py-3 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 shadow-lg shadow-red-200 transition-all text-sm">삭제 승인</button>
+                <button id="confirmDeleteGroupBtn" class="flex-1 py-3 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 shadow-lg shadow-red-200 transition-all text-sm">삭제 승인</button>
+            </div>
+        </div>
+    </div>
+    <div id="leaveConfirmModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl p-8 text-center animate-in fade-in zoom-in duration-200">
+            <div class="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="fa-solid fa-triangle-exclamation text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-bold text-gray-900 mb-2">그룹에서 탈퇴하시겠습니까?</h3>
+            <p class="text-sm text-gray-400 leading-relaxed mb-8">탈퇴 시 이 그룹의 일정 및 활동 내역을 더 이상 확인할 수 없습니다.</p>
+            <div class="flex gap-3">
+                <button onclick="closeLeaveConfirm()" class="flex-1 py-3 bg-gray-50 text-gray-500 font-bold rounded-xl hover:bg-gray-100 transition-all text-sm">취소</button>
+                <button onclick="leaveGroup()" class="flex-1 py-3 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 shadow-lg shadow-red-200 transition-all text-sm">탈퇴</button>
             </div>
         </div>
     </div>

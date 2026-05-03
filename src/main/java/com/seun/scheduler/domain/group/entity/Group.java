@@ -35,6 +35,9 @@ public class Group {
 
     private String groupImage;
 
+    @Enumerated(EnumType.STRING)
+    private GroupStatus status;
+
     @Builder.Default
     @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<GroupMember> members = new ArrayList<>();
@@ -61,11 +64,17 @@ public class Group {
         this.members.add(GroupMember.of(this, member, GroupRole.LEADER));
     }
 
+    public void delete() {
+
+        this.status = GroupStatus.DELECTED;
+    }
+
     public static Group from(GroupCreateRequest request) {
 
         return Group.builder()
                 .name(request.getName())
                 .description(request.getDescription())
+                .status(GroupStatus.ACTIVE)
                 .build();
     }
 }

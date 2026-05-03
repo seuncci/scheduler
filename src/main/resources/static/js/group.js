@@ -82,14 +82,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-function openDeleteConfirm() {
-    document.getElementById('deleteConfirmModal').classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
-}
-function closeDeleteConfirm() {
-    document.getElementById('deleteConfirmModal').classList.add('hidden');
-    document.body.style.overflow = 'auto';
-}
 function openEditModal() {
     document.getElementById('editGroupModal').classList.remove('hidden');
     document.body.style.overflow = 'hidden';
@@ -168,7 +160,6 @@ document.getElementById('confirmDeleteLinkBtn')?.addEventListener('click', async
 
         if (response.ok) {
             showToast('success', result.message);
-            closeDeleteConfirm();
             setTimeout(() => { location.reload(); }, 2000);
         } else {
             showToast('error', result.message);
@@ -182,4 +173,219 @@ document.getElementById('confirmDeleteLinkBtn')?.addEventListener('click', async
 function closeDeleteLinkModal() {
     document.getElementById('deleteLinkConfirmModal').classList.add('hidden');
     document.body.style.overflow = 'auto';
+}
+
+function openLeaveConfirm() {
+    document.getElementById('leaveConfirmModal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeLeaveConfirm() {
+    document.getElementById('leaveConfirmModal').classList.add('hidden');
+    document.body.style.overflow = 'auto';
+}
+
+document.getElementById('confirmKickBtn').addEventListener('click', async function() {
+    if (!targetMemberId) return;
+
+    const pathSegments = window.location.pathname.split('/');
+    const groupId = pathSegments[pathSegments.indexOf('groups') + 1];
+
+    try {
+        const response = await fetch(`/api/groups/${groupId}/members/${targetMemberId}/kick`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            showToast('success', result.message);
+            setTimeout(() => { location.reload(); }, 2000);
+        } else {
+            showToast('error', result.message);
+        }
+    } catch (error) {
+        console.error("Error kicking member:", error);
+        showToast('error', '서버 통신 중 오류가 발생했습니다.');
+    }
+});
+
+function openInviteMemberModal() {
+    document.getElementById('inviteMemberModal').classList.remove('hidden');
+}
+function closeInviteMemberModal() {
+    document.getElementById('inviteMemberModal').classList.add('hidden');
+}
+
+let targetMemberId = null;
+function openKickModal(memberId, memberName) {
+    targetMemberId = memberId;
+    document.getElementById('kickMemberName').innerText = memberName;
+    document.getElementById('kickMemberModal').classList.remove('hidden');
+}
+function closeKickModal() {
+    document.getElementById('kickMemberModal').classList.add('hidden');
+}
+
+function handleKickClick(button) {
+    const id = button.getAttribute('data-id');
+    const name = button.getAttribute('data-name');
+    openKickModal(id, name);
+}
+
+let selectedMemberId = null;
+
+function openTransferModal() {
+    document.getElementById('transferOwnershipModal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeTransferModal() {
+    document.getElementById('transferOwnershipModal').classList.add('hidden');
+    document.body.style.overflow = 'auto';
+    selectedMemberId = null;
+}
+
+function handleTransferClick(button) {
+
+    const id = button.getAttribute('data-id');
+    const name = button.getAttribute('data-name');
+
+    selectedMemberId = id;
+    const nameSpan = document.getElementById('targetOwnerName');
+    if (nameSpan) {
+        nameSpan.innerText = name;
+    }
+
+    openTransferModal();
+}
+
+function openTransferModal() {
+    const modal = document.getElementById('transferOwnershipModal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function closeTransferModal() {
+    const modal = document.getElementById('transferOwnershipModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        document.body.style.overflow = 'auto';
+    }
+    selectedMemberId = null;
+}
+
+async function leaveGroup() {
+
+    const pathSegments = window.location.pathname.split('/');
+    const groupId = pathSegments[pathSegments.indexOf('groups') + 1];
+
+    try {
+        const response = await fetch(`/api/groups/${groupId}/members/leave`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            showToast('success', result.message);
+            setTimeout(() => {
+                location.href = '/members/me/groups';
+            }, 2000);
+        } else {
+            showToast('error', result.message);
+        }
+    } catch (error) {
+        console.error("Error leaving group:", error);
+        showToast('error', '서버와의 통신에 실패했습니다.');
+    }
+}
+
+document.getElementById('confirmTransferBtn')?.addEventListener('click', async function() {
+
+    if (!selectedMemberId) {
+        showToast('error', '위임할 대상을 선택해주세요.');
+        return;
+    }
+
+    const pathSegments = window.location.pathname.split('/');
+    const groupId = pathSegments[pathSegments.indexOf('groups') + 1];
+
+    try {
+        const response = await fetch(`/api/groups/${groupId}/members/${selectedMemberId}/transfer`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+
+            showToast('success', result.message);
+
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+        } else {
+            showToast('error', result.message);
+        }
+    } catch (error) {
+        console.error("Error transferring ownership:", error);
+        showToast('error', '서버 통신 중 오류가 발생했습니다.');
+    }
+});
+
+document.getElementById('confirmDeleteGroupBtn')?.addEventListener('click', async function() {
+    const pathSegments = window.location.pathname.split('/');
+    const groupId = pathSegments[pathSegments.indexOf('groups') + 1];
+
+    try {
+        const response = await fetch(`/api/groups/${groupId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            showToast('success', result.message);
+
+            setTimeout(() => {
+                location.href = '/members/me/groups';
+            }, 2000);
+        } else {
+            showToast('error', result.message);
+        }
+    } catch (error) {
+        console.error("Error deleting group:", error);
+        showToast('error', '서버 통신 중 오류가 발생했습니다.');
+    }
+});
+
+function openDeleteConfirm() {
+    const modal = document.getElementById('deleteConfirmModal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function closeDeleteConfirm() {
+    const modal = document.getElementById('deleteConfirmModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        document.body.style.overflow = 'auto';
+    }
 }

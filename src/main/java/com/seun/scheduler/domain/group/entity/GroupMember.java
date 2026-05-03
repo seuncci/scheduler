@@ -36,12 +36,38 @@ public class GroupMember {
     @Enumerated(EnumType.STRING)
     private GroupRole role;
 
+    @Enumerated(EnumType.STRING)
+    private GroupMemberStatus status;
+
     @CreatedDate
     @Column(updatable = false)
     private LocalDateTime createdDate;
 
+    private LocalDateTime lastJoinedDate;
+
     @LastModifiedDate
     private LocalDateTime modifiedDate;
+
+    public void delegate(GroupRole role) {
+
+        this.role = role;
+    }
+
+    public void rejoin() {
+
+        this.status = GroupMemberStatus.ACTIVE;
+        this.lastJoinedDate = LocalDateTime.now();
+    }
+
+    public void kick() {
+
+        this.status = GroupMemberStatus.KICKED;
+    }
+
+    public void leave() {
+
+        this.status = GroupMemberStatus.RESIGNED;
+    }
 
     public static GroupMember of(Group group, Member member, GroupRole role) {
 
@@ -49,6 +75,7 @@ public class GroupMember {
                 .group(group)
                 .member(member)
                 .role(role)
+                .status(GroupMemberStatus.ACTIVE)
                 .build();
     }
 }
