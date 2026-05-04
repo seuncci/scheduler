@@ -1,13 +1,17 @@
 package com.seun.scheduler.domain.member.service;
 
+import com.seun.scheduler.domain.group.entity.*;
+import com.seun.scheduler.domain.group.repository.GroupInviteMemberRepository;
+import com.seun.scheduler.domain.group.repository.GroupMemberRepository;
+import com.seun.scheduler.domain.member.dto.*;
 import com.seun.scheduler.domain.member.entity.Member;
-import com.seun.scheduler.domain.member.dto.MemberJoinRequest;
-import com.seun.scheduler.domain.member.dto.MemberProfileResponse;
-import com.seun.scheduler.domain.member.dto.MemberProfileUpdateRequest;
 import com.seun.scheduler.global.common.ResultCode;
 import com.seun.scheduler.global.error.CustomException;
 import com.seun.scheduler.domain.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +22,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -25,6 +31,8 @@ import java.util.UUID;
 public class MemberService {
 
     private final MemberRepository memberRepository;
+    private final GroupMemberRepository groupMemberRepository;
+    private final GroupInviteMemberRepository groupInviteMemberRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
@@ -92,6 +100,78 @@ public class MemberService {
 
            member.updateProfileImage(fileName);
        }
+    }
+
+    public NotificationSummaryResponse getNotificationSummary(String memberId) {
+
+        Member member = memberRepository.findByMemberId(memberId).orElseThrow(() -> new CustomException(ResultCode.MEMBER_NOT_FOUND));
+
+        Page<GroupInviteMember> pages = groupInviteMemberRepository.findByMemberAndStatusAndGroup_Status(member, GroupInvitationStatus.PENDING, GroupStatus.ACTIVE,
+                        PageRequest.of(0, 5, Sort.by(Sort.Order.desc("createdDate"))));
+
+        return new NotificationSummaryResponse(pages.stream().map(GroupInvitationItem::from).toList(), pages.getTotalElements());
+    }
+
+    @Transactional
+    public void acceptInvitation(String memberId, Long id) {
+
+        Member member = memberRepository.findByMemberId(memberId).orElseThrow(() -> new CustomException(ResultCode.MEMBER_NOT_FOUND));
+        GroupInviteMember inviteMember = groupInviteMemberRepository.findByIdAndMember_MemberId(id, member).orElseThrow(() -> new CustomException(ResultCode.INVALID_INVITATION));
+
+        if (inviteMember.getGroup().getStatus() != GroupStatus.ACTIVE) {
+
+            throw new CustomException(ResultCode.INACTIVE_GROUP);
+        }
+
+        if (inviteMember.getStatus() != GroupInvitationStatus.PENDING) {
+
+            throw new CustomException(ResultCode.ALREADY_PROCESSED_INVITE);
+        }
+
+        if (groupMemberRepository.findByGroupAndMemberAndStatus(inviteMember.getGroup(), member, GroupMemberStatus.ACTIVE).isPresent()) {
+
+            throw new CustomException(ResultCode.ALREADY_GROUP_MEMBER);
+        }
+
+        inviteMember.updateStatus(GroupInvitationStatus.ACCEPTED);
+
+        // 기존 가입 이력 조회
+        Optional<GroupMember> history = groupMemberRepository.findByGroupAndMember(inviteMember.getGroup(), member);
+
+        if (history.isPresent()) {
+
+            GroupMember groupMember = history.get();
+
+            groupMember.rejoin();
+
+        } else {
+
+            groupMemberRepository.save(GroupMember.of(inviteMember.getGroup(), member, GroupRole.MEMBER));
+        }
+    }
+
+    @Transactional
+    public void rejectInvitation(String memberId, Long id) {
+
+        Member member = memberRepository.findByMemberId(memberId).orElseThrow(() -> new CustomException(ResultCode.MEMBER_NOT_FOUND));
+        GroupInviteMember inviteMember = groupInviteMemberRepository.findByIdAndMember_MemberId(id, member).orElseThrow(() -> new CustomException(ResultCode.INVALID_INVITATION));
+
+        if (inviteMember.getGroup().getStatus() != GroupStatus.ACTIVE) {
+
+            throw new CustomException(ResultCode.INACTIVE_GROUP);
+        }
+
+        if (inviteMember.getStatus() != GroupInvitationStatus.PENDING) {
+
+            throw new CustomException(ResultCode.ALREADY_PROCESSED_INVITE);
+        }
+
+        if (groupMemberRepository.findByGroupAndMemberAndStatus(inviteMember.getGroup(), member, GroupMemberStatus.ACTIVE).isPresent()) {
+
+            throw new CustomException(ResultCode.ALREADY_GROUP_MEMBER);
+        }
+
+        inviteMember.updateStatus(GroupInvitationStatus.REJECTED);
     }
 
     // 아이디 중복 체크

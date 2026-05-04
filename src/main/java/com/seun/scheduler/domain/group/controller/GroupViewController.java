@@ -1,7 +1,7 @@
 package com.seun.scheduler.domain.group.controller;
 
 import com.seun.scheduler.security.auth.CustomUserDetails;
-import com.seun.scheduler.service.GroupService;
+import com.seun.scheduler.domain.group.service.GroupService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;

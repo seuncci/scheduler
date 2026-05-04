@@ -49,10 +49,19 @@
 </head>
 <body class="bg-gray-100">
 
+<div id="toast"
+     class="fixed top-[-100px] left-1/2 -translate-x-1/2 z-[10000] w-full max-w-sm transition-all duration-500 ease-in-out">
+    <div id="toast-container" class="mx-4 px-4 py-3 rounded-lg shadow-md flex items-center justify-center gap-2 border bg-white">
+        <i id="toast-icon" class="fa-solid"></i>
+        <span id="toast-message" class="font-medium text-sm text-center"></span>
+    </div>
+</div>
+
 <div th:replace="~{fragments/header :: mainHeader}"></div>
 
 <main layout:fragment="content">
 </main>
+<script src="/js/common.js"></script>
 <script th:inline="javascript">
     /*<![CDATA[*/
     const errorMsg = /*[[${errorMessage}]]*/ null;
@@ -62,7 +71,7 @@
             if (typeof showToast === 'function') {
                 showToast('error', errorMsg);
             } else {
-                console.error("showToast 함수가 정의되지 않았습니다. profile.js 경로를 확인하세요.");
+                console.error("error");
             }
         });
     }

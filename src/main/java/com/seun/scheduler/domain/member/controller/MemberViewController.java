@@ -1,12 +1,10 @@
 package com.seun.scheduler.domain.member.controller;
 
-import com.seun.scheduler.domain.group.dto.GroupMemberInfo;
-import com.seun.scheduler.dto.GroupDetailResponse;
 import com.seun.scheduler.security.auth.CustomUserDetails;
-import com.seun.scheduler.service.GroupService;
+import com.seun.scheduler.domain.group.service.GroupService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -43,7 +41,7 @@ public class MemberViewController {
     }
 
     @GetMapping("/me/groups")
-    public String groupPage(@AuthenticationPrincipal CustomUserDetails userDetails, @PageableDefault(size = 9, sort = "createdDate") Pageable pageable, Model model) {
+    public String groupPage(@AuthenticationPrincipal CustomUserDetails userDetails, @PageableDefault(size = 6, sort = "createdDate", direction = Sort.Direction.DESC) Pageable pageable, Model model) {
 
         model.addAttribute("groups", groupService.getMyGroupList(userDetails.getUsername(), pageable));
 
@@ -51,11 +49,21 @@ public class MemberViewController {
     }
 
     @GetMapping("/me/groups/{groupId}")
-    public String groupDetailPage(@PathVariable("groupId") Long groupId, @PageableDefault(size = 9, sort = "createdDate") Pageable pageable, Model model) {
+    public String groupDetailPage(@AuthenticationPrincipal CustomUserDetails userDetails, @PathVariable("groupId") Long groupId, @PageableDefault Pageable pageable, Model model) {
 
-        model.addAttribute("group", groupService.getGroup(groupId));
+        model.addAttribute("group", groupService.getGroup(groupId, userDetails.getUsername()));
         model.addAttribute("members", groupService.getGroupMembers(groupId, pageable));
 
         return "/member/group-detail";
+    }
+
+    @GetMapping("/me/groups/{groupId}/invitation-links")
+    public String groupInvitationPage(@AuthenticationPrincipal CustomUserDetails userDetails,
+                                      @PathVariable("groupId") Long groupId, Model model) {
+
+        model.addAttribute("group", groupService.getGroup(groupId, userDetails.getUsername()));
+        model.addAttribute("links", groupService.getInvitationLinks(userDetails.getUsername(), groupId));
+
+        return "/member/group-invitation-links";
     }
 }

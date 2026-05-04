@@ -389,3 +389,41 @@ function closeDeleteConfirm() {
         document.body.style.overflow = 'auto';
     }
 }
+
+document.getElementById('inviteMemberForm')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const memberLoginId = this.memberLoginId.value.trim();
+    if (!memberLoginId) {
+        showToast('error', '초대할 사용자의 아이디를 입력하세요.');
+        return;
+    }
+
+    const pathSegments = window.location.pathname.split('/');
+    const groupId = pathSegments[pathSegments.indexOf('groups') + 1];
+
+    try {
+        const response = await fetch(`/api/groups/${groupId}/invitations`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+
+            body: JSON.stringify({
+                memberId: memberLoginId
+            })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            showToast('success', result.message);
+            setTimeout(() => { location.reload(); }, 1500);
+        } else {
+            showToast('error', result.message);
+        }
+    } catch (error) {
+        console.error("Error inviting member:", error);
+        showToast('error', '서버 통신 중 오류가 발생했습니다.');
+    }
+});

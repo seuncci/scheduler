@@ -4,13 +4,6 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layouts/base-layout}">
 <main layout:fragment="content">
-  <div id="toast"
-       class="fixed top-[-100px] left-1/2 -translate-x-1/2 z-[10000] w-full max-w-sm transition-all duration-500 ease-in-out">
-    <div id="toast-container" class="mx-4 px-4 py-3 rounded-lg shadow-md flex items-center justify-center gap-2 border bg-white">
-      <i id="toast-icon" class="fa-solid"></i>
-      <span id="toast-message" class="font-medium text-sm text-center"></span>
-    </div>
-  </div>
   <div class="max-w-7xl mx-auto p-6">
 
     <div class="flex flex-col md:flex-row gap-6">
@@ -74,7 +67,7 @@
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10 flex-1">
           </div>
 
-          <div th:if="${groups.totalPages > 0}" class="flex items-center justify-center pt-10 border-t border-gray-100 mt-auto">
+          <div th:if="${groups.totalPages > 1}" class="flex items-center justify-center pt-10 border-t border-gray-100 mt-auto">
 
             <nav class="flex items-center gap-2"
                  th:if="${!groups.isEmpty()}"

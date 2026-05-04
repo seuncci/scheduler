@@ -3,6 +3,7 @@ package com.seun.scheduler.domain.member.controller;
 import com.seun.scheduler.domain.member.dto.MemberJoinRequest;
 import com.seun.scheduler.domain.member.dto.MemberProfileResponse;
 import com.seun.scheduler.domain.member.dto.MemberProfileUpdateRequest;
+import com.seun.scheduler.domain.member.dto.NotificationSummaryResponse;
 import com.seun.scheduler.global.common.CommonResponse;
 import com.seun.scheduler.global.common.ResultCode;
 import com.seun.scheduler.domain.member.service.MemberService;
@@ -42,4 +43,25 @@ public class MemberApiController {
         return CommonResponse.result(ResultCode.PROFILE_UPDATE_SUCCESS);
     }
 
+    @GetMapping("/me/notifications/summary")
+    public CommonResponse<NotificationSummaryResponse> getNotificationSummary(@AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        NotificationSummaryResponse notification = memberService.getNotificationSummary(userDetails.getUsername());
+
+        return CommonResponse.result(ResultCode.NOTIFICATION_GET_SUCCESS, notification);
+    }
+
+    @PostMapping("/me/invitations/{invitationId}/accept")
+    public CommonResponse<Void> acceptInvitation(@AuthenticationPrincipal CustomUserDetails userDetails, @PathVariable("invitationId") Long invitationId) {
+
+        memberService.acceptInvitation(userDetails.getUsername(), invitationId);
+        return CommonResponse.result(ResultCode.INVITE_ACCEPT_SUCCESS);
+    }
+
+    @PostMapping("/me/invitations/{invitationId}/reject")
+    public CommonResponse<Void> rejectInvitation(@AuthenticationPrincipal CustomUserDetails userDetails, @PathVariable("invitationId") Long invitationId) {
+
+        memberService.rejectInvitation(userDetails.getUsername(), invitationId);
+        return CommonResponse.result(ResultCode.INVITE_REJECT_SUCCESS);
+    }
 }
