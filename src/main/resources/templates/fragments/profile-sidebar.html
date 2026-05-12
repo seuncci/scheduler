@@ -23,7 +23,7 @@
   <div class="flex items-center gap-5">
     <div class="w-16 h-16 rounded-full overflow-hidden border border-gray-100 shadow-sm">
       <img th:src="@{|${#strings.isEmpty(member.profileImage) ? '/images/default-profile.png' : '/member/' + member.profileImage}|}"
-           alt="profile" class="w-full h-full object-cover">
+           class="w-full h-full object-cover">
     </div>
     <div>
       <h2 th:text="${member.name}" class="text-lg font-bold text-gray-800 leading-tight"></h2>

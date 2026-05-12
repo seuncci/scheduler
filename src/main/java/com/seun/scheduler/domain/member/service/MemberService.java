@@ -8,10 +8,14 @@ import com.seun.scheduler.domain.member.entity.Member;
 import com.seun.scheduler.global.common.ResultCode;
 import com.seun.scheduler.global.error.CustomException;
 import com.seun.scheduler.domain.member.repository.MemberRepository;
+import com.seun.scheduler.security.auth.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -99,6 +103,7 @@ public class MemberService {
            profileImage.transferTo(new File(savePath + fileName));
 
            member.updateProfileImage(fileName);
+           updateSession(member);
        }
     }
 
@@ -184,5 +189,15 @@ public class MemberService {
     private boolean isEmailDuplicated(String email) {
 
         return memberRepository.existsByEmail(email);
+    }
+
+    private void updateSession(Member member) {
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        CustomUserDetails userDetails = new CustomUserDetails(member);
+
+        Authentication newAuth = new UsernamePasswordAuthenticationToken(userDetails, auth.getCredentials(), auth.getAuthorities());
+
+        SecurityContextHolder.getContext().setAuthentication(newAuth);
     }
 }

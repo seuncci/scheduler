@@ -48,9 +48,11 @@
             <span th:text="${group.role.name == '관리자'} ? '멤버 관리' : '멤버 목록'"></span>
         </a>
 
-        <button class="pb-4 text-sm font-medium text-gray-400 hover:text-gray-600 border-b-2 border-transparent hover:border-gray-200 whitespace-nowrap transition-all">
+        <a th:href="@{/members/me/groups/{id}/schedules(id=${group.id})}"
+           th:classappend="${currentTab == 'schedules'} ? 'text-black border-black font-bold border-b-2' : 'text-gray-400 border-transparent font-medium hover:text-gray-600 hover:border-gray-200'"
+           class="pb-4 text-sm whitespace-nowrap transition-all cursor-pointer border-b-2">
             그룹 일정 <span class="ml-1 text-[10px] bg-indigo-50 text-indigo-500 px-1.5 py-0.5 rounded-full">3</span>
-        </button>
+        </a>
 
         <th:block th:if="${group.role.name == '관리자'}">
             <a th:href="@{/members/me/groups/{id}/invitation-links(id=${group.id})}"

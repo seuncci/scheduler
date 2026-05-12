@@ -31,7 +31,10 @@ public class MemberViewController {
     }
 
     @GetMapping("/me")
-    public String profilePage() {
+    public String profilePage(@AuthenticationPrincipal CustomUserDetails userDetails, Model model) {
+
+        model.addAttribute("groupCount", groupService.getMyGroupCount(userDetails.getUsername()));
+
         return "/member/me";
     }
 
@@ -65,5 +68,14 @@ public class MemberViewController {
         model.addAttribute("links", groupService.getInvitationLinks(userDetails.getUsername(), groupId));
 
         return "/member/group-invitation-links";
+    }
+
+    @GetMapping("/me/groups/{groupId}/schedules")
+    public String getGroupSchedules(@AuthenticationPrincipal CustomUserDetails userDetails,
+                                    @PathVariable("groupId") Long groupId, Model model) {
+
+        model.addAttribute("group", groupService.getGroup(groupId, userDetails.getUsername()));
+
+        return "/member/group-schedules";
     }
 }

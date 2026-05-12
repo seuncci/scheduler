@@ -28,6 +28,10 @@ public class CustomUserDetails implements UserDetails {
         return member.getMemberId();
     }
 
+    public String getName() {
+        return member.getName();
+    }
+
     public String getProfileImage() {
         return member.getProfileImage();
     }

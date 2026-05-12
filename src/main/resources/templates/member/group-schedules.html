@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/base-layout}">
+<main layout:fragment="content">
+    <div class="max-w-7xl mx-auto p-6">
+        <div class="flex flex-col md:flex-row gap-6">
+            <th:block th:replace="~{fragments/profile-sidebar :: menu('group')}"></th:block>
+
+            <div class="flex-1 flex flex-col gap-6">
+                <th:block th:replace="~{fragments/profile-sidebar :: summary('info')}"></th:block>
+
+                <section class="bg-white p-8 rounded-2xl shadow-sm border border-gray-200 min-h-[600px] flex flex-col">
+                    <th:block th:replace="~{fragments/group-header :: header('schedules')}"></th:block>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+
+                        <div class="lg:col-span-4 space-y-6">
+                            <div class="bg-indigo-600 rounded-3xl p-6 text-white shadow-xl shadow-indigo-100 relative overflow-hidden">
+                                <div class="relative z-10">
+                                    <p class="text-indigo-100 text-xs font-bold uppercase tracking-wider mb-1">Upcoming Events</p>
+                                    <h3 class="text-2xl font-black mb-4">이번 달에는 <br>3개의 일정이 있어요</h3>
+                                    <button class="px-4 py-2 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-xl text-xs font-bold transition-all flex items-center gap-2">
+                                        <i class="fa-solid fa-plus"></i> 새 일정 등록
+                                    </button>
+                                </div>
+                                <i class="fa-solid fa-calendar-check absolute -right-4 -bottom-4 text-8xl text-white/10 -rotate-12"></i>
+                            </div>
+
+                            <div class="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm">
+                                <h4 class="text-sm font-bold text-gray-900 mb-5 flex items-center justify-between">
+                                    다가오는 일정
+                                    <span class="text-[10px] text-gray-400 font-medium">전체보기</span>
+                                </h4>
+
+                                <div class="space-y-4">
+                                    <div class="flex items-start gap-4 p-3 hover:bg-gray-50 rounded-2xl transition-all cursor-pointer group">
+                                        <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-500 flex flex-col items-center justify-center shrink-0 border border-amber-100">
+                                            <span class="text-[10px] font-bold leading-none">MAY</span>
+                                            <span class="text-lg font-black leading-none mt-1">15</span>
+                                        </div>
+                                        <div class="min-w-0">
+                                            <p class="text-sm font-bold text-gray-800 truncate group-hover:text-indigo-600 transition-colors">주간 스크럼 및 리뷰</p>
+                                            <p class="text-[11px] text-gray-400 mt-1 flex items-center gap-1">
+                                                <i class="fa-regular fa-clock"></i> 14:00 - 15:30
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-start gap-4 p-3 hover:bg-gray-50 rounded-2xl transition-all cursor-pointer group">
+                                        <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-500 flex flex-col items-center justify-center shrink-0 border border-indigo-100">
+                                            <span class="text-[10px] font-bold leading-none">MAY</span>
+                                            <span class="text-lg font-black leading-none mt-1">22</span>
+                                        </div>
+                                        <div class="min-w-0">
+                                            <p class="text-sm font-bold text-gray-800 truncate group-hover:text-indigo-600 transition-colors">기획안 최종 마감</p>
+                                            <p class="text-[11px] text-gray-400 mt-1 flex items-center gap-1">
+                                                <i class="fa-regular fa-clock"></i> 18:00까지
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="lg:col-span-8">
+                            <div class="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+                                <div class="p-6 border-b border-gray-50 flex items-center justify-between bg-white/50 backdrop-blur-sm sticky top-0 z-10">
+                                    <div class="flex items-center gap-4">
+                                        <h3 class="text-xl font-black text-gray-900">2024년 5월</h3>
+                                        <div class="flex items-center bg-gray-100 rounded-lg p-1">
+                                            <button class="w-8 h-8 flex items-center justify-center hover:bg-white rounded-md transition-all text-gray-500"><i class="fa-solid fa-chevron-left text-xs"></i></button>
+                                            <button class="w-8 h-8 flex items-center justify-center hover:bg-white rounded-md transition-all text-gray-500"><i class="fa-solid fa-chevron-right text-xs"></i></button>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <button class="px-4 py-2 bg-gray-900 text-white text-xs font-bold rounded-xl shadow-lg shadow-gray-200">Today</button>
+                                    </div>
+                                </div>
+
+                                <div class="p-6 bg-white">
+                                    <div class="grid grid-cols-7 mb-4 border-b border-gray-50 pb-3">
+                                        <div class="text-center text-[11px] font-black text-red-400 uppercase tracking-widest">일</div>
+                                        <div class="text-center text-[11px] font-black text-gray-400 uppercase tracking-widest">월</div>
+                                        <div class="text-center text-[11px] font-black text-gray-400 uppercase tracking-widest">화</div>
+                                        <div class="text-center text-[11px] font-black text-gray-400 uppercase tracking-widest">수</div>
+                                        <div class="text-center text-[11px] font-black text-gray-400 uppercase tracking-widest">목</div>
+                                        <div class="text-center text-[11px] font-black text-gray-400 uppercase tracking-widest">금</div>
+                                        <div class="text-center text-[11px] font-black text-blue-400 uppercase tracking-widest">토</div>
+                                    </div>
+
+                                    <div class="grid grid-cols-7 gap-px bg-gray-100 border border-gray-100 rounded-2xl overflow-hidden shadow-inner">
+
+                                        <div class="bg-gray-50/50 aspect-square"></div>
+                                        <div class="bg-gray-50/50 aspect-square"></div>
+                                        <div class="bg-gray-50/50 aspect-square"></div>
+
+                                        <div class="bg-white aspect-square p-2 hover:bg-gray-50 transition-all relative group cursor-pointer flex items-center justify-center">
+                                            <span class="absolute top-2 left-3 text-xs font-bold text-gray-400 group-hover:text-indigo-600">1</span>
+                                        </div>
+
+                                        <div class="bg-indigo-50/60 aspect-square p-2 hover:bg-indigo-100/50 transition-all relative group cursor-pointer flex items-center justify-center">
+                                            <span class="absolute top-2 left-3 text-xs font-bold text-indigo-600">2</span>
+                                        </div>
+
+                                        <div class="bg-indigo-50/60 aspect-square p-2 hover:bg-indigo-100/50 transition-all relative group cursor-pointer flex items-center justify-center">
+                                            <span class="absolute top-2 left-3 text-xs font-bold text-indigo-600">3</span>
+                                        </div>
+
+                                        <div class="bg-white aspect-square p-2 hover:bg-gray-50 relative group cursor-pointer flex items-center justify-center">
+                                            <span class="absolute top-2 left-3 text-xs font-bold text-blue-400 group-hover:text-indigo-600">4</span>
+                                        </div>
+
+                                        <div class="bg-white aspect-square p-2 hover:bg-gray-50 relative group cursor-pointer flex items-center justify-center">
+                                            <span class="absolute top-2 left-3 text-xs font-bold text-red-400 group-hover:text-indigo-600">5</span>
+                                        </div>
+
+                                        <div class="bg-white aspect-square p-2 hover:bg-gray-50 relative group cursor-pointer flex items-center justify-center"><span class="absolute top-2 left-3 text-xs font-bold text-gray-400 group-hover:text-indigo-600">6</span></div>
+                                        <div class="bg-white aspect-square p-2 hover:bg-gray-50 relative group cursor-pointer flex items-center justify-center"><span class="absolute top-2 left-3 text-xs font-bold text-gray-400 group-hover:text-indigo-600">7</span></div>
+                                        <div class="bg-white aspect-square p-2 hover:bg-gray-50 relative group cursor-pointer flex items-center justify-center"><span class="absolute top-2 left-3 text-xs font-bold text-gray-400 group-hover:text-indigo-600">8</span></div>
+                                        <div class="bg-white aspect-square p-2 hover:bg-gray-50 relative group cursor-pointer flex items-center justify-center"><span class="absolute top-2 left-3 text-xs font-bold text-gray-400 group-hover:text-indigo-600">9</span></div>
+                                        <div class="bg-white aspect-square p-2 hover:bg-gray-50 relative group cursor-pointer flex items-center justify-center"><span class="absolute top-2 left-3 text-xs font-bold text-gray-400 group-hover:text-indigo-600">10</span></div>
+                                        <div class="bg-white aspect-square p-2 hover:bg-gray-50 relative group cursor-pointer flex items-center justify-center"><span class="absolute top-2 left-3 text-xs font-bold text-blue-400 group-hover:text-indigo-600">11</span></div>
+                                        <div class="bg-white aspect-square p-2 hover:bg-gray-50 relative group cursor-pointer flex items-center justify-center"><span class="absolute top-2 left-3 text-xs font-bold text-red-400 group-hover:text-indigo-600">12</span></div>
+                                        <div class="bg-white aspect-square p-2 hover:bg-gray-50 relative group cursor-pointer flex items-center justify-center"><span class="absolute top-2 left-3 text-xs font-bold text-gray-400 group-hover:text-indigo-600">13</span></div>
+                                        <div class="bg-white aspect-square p-2 hover:bg-gray-50 relative group cursor-pointer flex items-center justify-center"><span class="absolute top-2 left-3 text-xs font-bold text-gray-400 group-hover:text-indigo-600">14</span></div>
+                                        <div class="bg-white aspect-square p-2 hover:bg-gray-50 relative group cursor-pointer flex items-center justify-center"><span class="absolute top-2 left-3 text-xs font-bold text-gray-400 group-hover:text-indigo-600">15</span></div>
+                                        <div class="bg-white aspect-square p-2 hover:bg-gray-50 relative group cursor-pointer flex items-center justify-center"><span class="absolute top-2 left-3 text-xs font-bold text-gray-400 group-hover:text-indigo-600">16</span></div>
+                                        <div class="bg-white aspect-square p-2 hover:bg-gray-50 relative group cursor-pointer flex items-center justify-center"><span class="absolute top-2 left-3 text-xs font-bold text-gray-400 group-hover:text-indigo-600">17</span></div>
+                                        <div class="bg-white aspect-square p-2 hover:bg-gray-50 relative group cursor-pointer flex items-center justify-center"><span class="absolute top-2 left-3 text-xs font-bold text-blue-400 group-hover:text-indigo-600">18</span></div>
+                                        <div class="bg-white aspect-square p-2 hover:bg-gray-50 relative group cursor-pointer flex items-center justify-center"><span class="absolute top-2 left-3 text-xs font-bold text-red-400 group-hover:text-indigo-600">19</span></div>
+                                        <div class="bg-white aspect-square p-2 hover:bg-gray-50 relative group cursor-pointer flex items-center justify-center"><span class="absolute top-2 left-3 text-xs font-bold text-gray-400 group-hover:text-indigo-600">20</span></div>
+                                        <div class="bg-white aspect-square p-2 hover:bg-gray-50 relative group cursor-pointer flex items-center justify-center"><span class="absolute top-2 left-3 text-xs font-bold text-gray-400 group-hover:text-indigo-600">21</span></div>
+                                        <div class="bg-white aspect-square p-2 hover:bg-gray-50 relative group cursor-pointer flex items-center justify-center"><span class="absolute top-2 left-3 text-xs font-bold text-gray-400 group-hover:text-indigo-600">22</span></div>
+                                        <div class="bg-white aspect-square p-2 hover:bg-gray-50 relative group cursor-pointer flex items-center justify-center"><span class="absolute top-2 left-3 text-xs font-bold text-gray-400 group-hover:text-indigo-600">23</span></div>
+                                        <div class="bg-white aspect-square p-2 hover:bg-gray-50 relative group cursor-pointer flex items-center justify-center"><span class="absolute top-2 left-3 text-xs font-bold text-gray-400 group-hover:text-indigo-600">24</span></div>
+                                        <div class="bg-white aspect-square p-2 hover:bg-gray-50 relative group cursor-pointer flex items-center justify-center"><span class="absolute top-2 left-3 text-xs font-bold text-blue-400 group-hover:text-indigo-600">25</span></div>
+                                        <div class="bg-white aspect-square p-2 hover:bg-gray-50 relative group cursor-pointer flex items-center justify-center"><span class="absolute top-2 left-3 text-xs font-bold text-red-400 group-hover:text-indigo-600">26</span></div>
+                                        <div class="bg-white aspect-square p-2 hover:bg-gray-50 relative group cursor-pointer flex items-center justify-center"><span class="absolute top-2 left-3 text-xs font-bold text-gray-400 group-hover:text-indigo-600">27</span></div>
+                                        <div class="bg-white aspect-square p-2 hover:bg-gray-50 relative group cursor-pointer flex items-center justify-center"><span class="absolute top-2 left-3 text-xs font-bold text-gray-400 group-hover:text-indigo-600">28</span></div>
+                                        <div class="bg-white aspect-square p-2 hover:bg-gray-50 relative group cursor-pointer flex items-center justify-center"><span class="absolute top-2 left-3 text-xs font-bold text-gray-400 group-hover:text-indigo-600">29</span></div>
+                                        <div class="bg-white aspect-square p-2 hover:bg-gray-50 relative group cursor-pointer flex items-center justify-center"><span class="absolute top-2 left-3 text-xs font-bold text-gray-400 group-hover:text-indigo-600">30</span></div>
+                                        <div class="bg-white aspect-square p-2 hover:bg-gray-50 relative group cursor-pointer flex items-center justify-center"><span class="absolute top-2 left-3 text-xs font-bold text-blue-400 group-hover:text-indigo-600">31</span></div>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <div id="inviteMemberModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in duration-300">
+            <div class="px-8 py-6 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
+                <h3 class="text-lg font-bold text-gray-900">멤버 초대하기</h3>
+                <button onclick="closeInviteMemberModal()" class="text-gray-400 hover:text-black">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <form id="inviteMemberForm" class="p-8 space-y-6">
+                <div>
+                    <label class="block text-[12px] font-bold text-gray-600 mb-2 uppercase tracking-tight">회원 아이디 (ID)</label>
+                    <input type="text" name="memberLoginId" placeholder="초대할 사용자의 아이디를 입력하세요"
+                           class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-medium">
+                </div>
+                <div class="flex gap-3 pt-4 border-t border-gray-50">
+                    <button type="button" onclick="closeInviteMemberModal()" class="flex-1 py-3 text-gray-400 font-bold text-sm">취소</button>
+                    <button type="submit" class="flex-[2] py-3 bg-gray-900 hover:bg-black text-white font-bold rounded-xl shadow-lg transition-all text-sm">초대 보내기</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script src="/js/profile.js"></script>
+    <script src="/js/group.js"></script>
+</main>
+</html>

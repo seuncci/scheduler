@@ -2,10 +2,7 @@ package com.seun.scheduler.domain.group.repository;
 
 import com.seun.scheduler.domain.group.dto.GroupMemberInfo;
 import com.seun.scheduler.domain.group.dto.MyGroupResponse;
-import com.seun.scheduler.domain.group.entity.Group;
-import com.seun.scheduler.domain.group.entity.GroupMember;
-import com.seun.scheduler.domain.group.entity.GroupMemberStatus;
-import com.seun.scheduler.domain.group.entity.GroupRole;
+import com.seun.scheduler.domain.group.entity.*;
 import com.seun.scheduler.domain.member.entity.Member;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -35,6 +32,7 @@ public interface GroupMemberRepository extends JpaRepository<GroupMember, Long> 
     Optional<GroupMember> findByGroupAndMemberAndStatus(Group group, Member member, GroupMemberStatus status);
 
     Long countByGroupAndStatus(Group group, GroupMemberStatus status);
+    Long countByMember_MemberIdAndGroup_Status(String memberId, GroupStatus status);
 
     Boolean existsByRoleAndGroupAndMember_MemberId(GroupRole role, Group group, String memberId);
 }

@@ -3,20 +3,26 @@ package com.seun.scheduler.domain.group.controller;
 import com.seun.scheduler.domain.group.dto.GroupCreateRequest;
 import com.seun.scheduler.domain.group.dto.GroupInviteRequest;
 import com.seun.scheduler.domain.group.dto.GroupUpdateRequest;
+import com.seun.scheduler.domain.group.dto.MyGroupResponse;
 import com.seun.scheduler.global.common.CommonResponse;
 import com.seun.scheduler.global.common.ResultCode;
+import com.seun.scheduler.global.error.CustomException;
 import com.seun.scheduler.security.auth.CustomUserDetails;
 import com.seun.scheduler.domain.group.service.GroupService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/groups")
 @RequiredArgsConstructor
-public class GroupController {
+public class GroupApiController {
 
     private final GroupService groupService;
 
@@ -103,5 +109,18 @@ public class GroupController {
 
         groupService.inviteMember(userDetails.getUsername(), request.getMemberId(), groupId);
         return CommonResponse.result(ResultCode.GROUP_INVITE_SUCCESS);
+    }
+
+    @GetMapping("/mine")
+    public CommonResponse<List<MyGroupResponse>> getAllMyGroups(@AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        Page<MyGroupResponse> groups = groupService.getMyGroupList(userDetails.getUsername(), Pageable.unpaged());
+
+        if (groups.isEmpty()) {
+
+            throw new CustomException(ResultCode.JOINED_GROUP_NOT_FOUND);
+        }
+
+        return CommonResponse.result(ResultCode.GROUP_GET_SUCCESS, groups.getContent());
     }
 }

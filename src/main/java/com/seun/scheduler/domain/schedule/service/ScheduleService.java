@@ -1,74 +1,97 @@
-package com.seun.scheduler.service;
+package com.seun.scheduler.domain.schedule.service;
 
-import com.seun.scheduler.domain.Group;
-import com.seun.scheduler.domain.Schedule;
-import com.seun.scheduler.domain.ScheduleComment;
-import com.seun.scheduler.domain.Member;
-import com.seun.scheduler.dto.*;
-import com.seun.scheduler.repository.*;
+import com.seun.scheduler.domain.group.entity.Group;
+import com.seun.scheduler.domain.group.entity.GroupMemberStatus;
+import com.seun.scheduler.domain.group.entity.GroupStatus;
+import com.seun.scheduler.domain.group.repository.GroupMemberRepository;
+import com.seun.scheduler.domain.group.repository.GroupRepository;
+import com.seun.scheduler.domain.member.entity.Member;
+import com.seun.scheduler.domain.member.repository.MemberRepository;
+import com.seun.scheduler.domain.schedule.dto.ScheduleCreateRequest;
+import com.seun.scheduler.domain.schedule.dto.ScheduleListResponse;
+import com.seun.scheduler.domain.schedule.dto.ScheduleRangeRequest;
+import com.seun.scheduler.domain.schedule.entity.Schedule;
+import com.seun.scheduler.domain.schedule.repository.ScheduleRepository;
+import com.seun.scheduler.global.common.ResultCode;
+import com.seun.scheduler.global.error.CustomException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 @Service
 @RequiredArgsConstructor
 public class ScheduleService {
+
     private final ScheduleRepository scheduleRepository;
-    private final ScheduleCommentRepository scheduleCommentRepository;
     private final MemberRepository memberRepository;
     private final GroupRepository groupRepository;
-    private final GroupUserRepository groupUserRepository;
+    private final GroupMemberRepository groupMemberRepository;
 
     @Transactional
-    public ScheduleResponse createPersonalSchedule(String userId, ScheduleRequest request) {
+    public void createSchedule(String memberId, ScheduleCreateRequest request) {
 
-        Member member = memberRepository.findByMemberId(userId).orElseThrow(
-                () -> new IllegalArgumentException("유저를 찾을 수 없습니다.")
-        );
+        if (request.getTargetType() == null) {
 
-        Schedule schedule = Schedule.builder()
-                .title(request.getTitle())
-                .content(request.getContent())
-                .location(request.getLocation())
-                .startDateTime(request.getStartDateTime())
-                .endDateTime(request.getEndDateTime())
-                .member(member)
-                .build();
-
-        scheduleRepository.save(schedule);
-
-        return ScheduleResponse.from(schedule, userId);
-    }
-
-    @Transactional
-    public ScheduleResponse createGroupSchedule(long groupId, String userId, ScheduleRequest request) {
-
-        Member member = memberRepository.findByMemberId(userId).orElseThrow(
-                () -> new IllegalArgumentException("유저를 찾을 수 없습니다.")
-        );
-
-        // 그룹이 존재하는지 확인
-        Group group = groupRepository.findById(groupId).orElseThrow(() -> new IllegalArgumentException("그룹 정보가 없습니다."));
-
-        // 해당 유저가 그룹원의 멤버인지 확인
-        if (!groupUserRepository.existsByGroup_IdAndMember_MemberId(groupId, userId)) {
-            throw new IllegalArgumentException("해당 그룹의 멤버만 일정을 등록할 수 있습니다.");
+            throw new CustomException(ResultCode.SCHEDULE_TYPE_REQUIRED);
         }
 
-        Schedule schedule = Schedule.builder()
-                .title(request.getTitle())
-                .content(request.getContent())
-                .location(request.getLocation())
-                .startDateTime(request.getStartDateTime())
-                .endDateTime(request.getEndDateTime())
-                .member(member)
-                .group(group)
-                .build();
+        if ("GROUP".equals(request.getTargetType()) && request.getGroupId() == null) {
 
-        scheduleRepository.save(schedule);
+            throw new CustomException(ResultCode.GROUP_SELECTION_REQUIRED);
+        }
 
-        return ScheduleResponse.from(schedule, userId, groupId);
+        LocalDateTime startDateTime = Optional.ofNullable(request.getStartDateTime())
+                .map(start -> start.length() <= 10 ?
+                                LocalDate.parse(start).atStartOfDay() : LocalDateTime.parse(start)).orElse(null);
+        LocalDateTime endDateTime = Optional.ofNullable(request.getEndDateTime())
+                .map(end -> end.length() <= 10 ?
+                        LocalDate.parse(end).atTime(23, 59, 59) : LocalDateTime.parse(end))
+                .orElseThrow(() -> new CustomException(ResultCode.SCHEDULE_END_TIME_REQUIRED));
+
+        if (startDateTime != null && endDateTime != null) {
+
+            if (startDateTime.isAfter(endDateTime)) {
+
+                throw new CustomException(ResultCode.INVALID_SCHEDULE_TIME);
+            }
+        }
+
+        Member member = memberRepository.findByMemberId(memberId).orElseThrow(() -> new CustomException(ResultCode.MEMBER_NOT_FOUND));
+        Group group = request.getGroupId() == null ?
+                null : groupRepository.findByIdAndStatus(request.getGroupId(), GroupStatus.ACTIVE).orElseThrow(() -> new CustomException(ResultCode.GROUP_NOT_FOUND));
+
+        if (group != null) {
+
+            groupMemberRepository.findByGroupAndMemberAndStatus(group, member, GroupMemberStatus.ACTIVE).orElseThrow(() -> new CustomException(ResultCode.NOT_GROUP_MEMBER));
+        }
+
+        scheduleRepository.save(Schedule.of(startDateTime, endDateTime, member, group, request));
     }
+
+    public List<ScheduleListResponse> getSchedulesByRange(String memberId, ScheduleRangeRequest request) {
+
+        LocalDateTime startDateTime = request.getStartDate().atStartOfDay();
+        LocalDateTime endDateTime = request.getEndDate().atTime(23, 59, 59);
+
+        List<Schedule> privates = scheduleRepository.findPrivateSchedules(memberId, startDateTime, endDateTime);
+        List<Schedule> groups = scheduleRepository.findGroupSchedules(memberId, startDateTime, endDateTime);
+
+        return Stream.concat(privates.stream(), groups.stream())
+                .distinct()
+                .map(ScheduleListResponse::from)
+                .sorted(Comparator.comparing(ScheduleListResponse::getStartDateTime, Comparator.nullsLast(Comparator.naturalOrder())))
+                .collect(Collectors.toList());
+    }
+
+    /*
 
     @Transactional
     public ScheduleResponse updateSchedule(long scheduleId, String userId, ScheduleRequest request) {
@@ -109,7 +132,7 @@ public class ScheduleService {
         // 그룹 일정만 댓글 등록이 가능하기 때문에 그룹 일정인지 체크
         if (schedule.getGroup() != null) {
             // 해당 유저가 그룹원의 멤버인지 확인
-            if (!groupUserRepository.existsByGroup_IdAndMember_MemberId(schedule.getGroup().getId(), userId)) {
+            if (!groupMemberRepository.existsByGroup_IdAndMember_MemberId(schedule.getGroup().getId(), userId)) {
                 throw new IllegalArgumentException("해당 그룹의 멤버만 일정을 등록할 수 있습니다.");
             }
         }
@@ -165,11 +188,13 @@ public class ScheduleService {
                 throw new IllegalArgumentException("본인의 개인 일정만 조회할 수 있습니다.");
             }
         } else {
-            if (!groupUserRepository.existsByGroup_IdAndMember_MemberId(schedule.getGroup().getId(), userId)) {
+            if (!groupMemberRepository.existsByGroup_IdAndMember_MemberId(schedule.getGroup().getId(), userId)) {
                 throw new IllegalArgumentException("해당 그룹의 멤버만 일정을 조회할 수 있습니다.");
             }
         }
 
         return ScheduleDetailResponse.of(schedule);
     }
+
+    */
 }

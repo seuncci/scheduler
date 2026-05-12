@@ -1,57 +1,41 @@
-package com.seun.scheduler.controller;
+package com.seun.scheduler.domain.schedule.controller;
 
-import com.seun.scheduler.dto.*;
-import com.seun.scheduler.security.UserDetailsImpl;
-import com.seun.scheduler.service.ScheduleService;
+import com.seun.scheduler.domain.schedule.dto.ScheduleCreateRequest;
+import com.seun.scheduler.domain.schedule.dto.ScheduleListResponse;
+import com.seun.scheduler.domain.schedule.dto.ScheduleRangeRequest;
+import com.seun.scheduler.global.common.CommonResponse;
+import com.seun.scheduler.global.common.ResultCode;
+import com.seun.scheduler.security.auth.CustomUserDetails;
+import com.seun.scheduler.domain.schedule.service.ScheduleService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
-@RequestMapping("/schedules")
+@RequestMapping("/api/schedules")
 @RequiredArgsConstructor
-public class ScheduleController {
+public class ScheduleApiController {
+
     private final ScheduleService scheduleService;
 
     @PostMapping
-    public ResponseEntity<CommonResponse<ScheduleResponse>> createPersonalSchedule(
-                @AuthenticationPrincipal UserDetailsImpl userDetails,
-                @Valid @RequestBody ScheduleRequest request
-            ) {
+    public CommonResponse<Void> createSchedule(@AuthenticationPrincipal CustomUserDetails userDetails, @Valid @RequestBody ScheduleCreateRequest request) {
 
-        ScheduleResponse schedule = scheduleService.createPersonalSchedule(userDetails.getUsername(), request);
+        scheduleService.createSchedule(userDetails.getUsername(), request);
 
-        CommonResponse<ScheduleResponse> response = CommonResponse.<ScheduleResponse> builder()
-                .status(HttpStatus.OK.value())
-                .code(HttpStatus.OK.name())
-                .message("등록 성공")
-                .data(schedule)
-                .build();
-
-        return ResponseEntity.ok(response);
+        return CommonResponse.result(ResultCode.SCHEDULE_CREATE_SUCCESS);
     }
 
-    @PostMapping("/groups/{groupId}")
-    public ResponseEntity<CommonResponse<ScheduleResponse>> createGroupSchedule(
-            @PathVariable("groupId") long groupId,
-            @AuthenticationPrincipal UserDetailsImpl userDetails,
-            @Valid @RequestBody ScheduleRequest request
-    ) {
-        ScheduleResponse schedule = scheduleService.createGroupSchedule(groupId, userDetails.getUsername(), request);
+    @GetMapping
+    public CommonResponse<List<ScheduleListResponse>> getSchedulesByRange(@AuthenticationPrincipal CustomUserDetails userDetails, @ModelAttribute ScheduleRangeRequest request) {
 
-        CommonResponse<ScheduleResponse> response = CommonResponse.<ScheduleResponse> builder()
-                .status(HttpStatus.OK.value())
-                .code(HttpStatus.OK.name())
-                .message("등록 성공")
-                .data(schedule)
-                .build();
-
-        return ResponseEntity.ok(response);
+        return CommonResponse.result(ResultCode.SCHEDULE_GET_SUCCESS, scheduleService.getSchedulesByRange(userDetails.getUsername(), request));
     }
 
+    /*
     @PatchMapping("/{scheduleId}")
     public ResponseEntity<CommonResponse<ScheduleResponse>> updateSchedule(
             @PathVariable("scheduleId") long scheduleId,
@@ -154,4 +138,6 @@ public class ScheduleController {
 
         return ResponseEntity.ok(response);
     }
+
+    */
 }

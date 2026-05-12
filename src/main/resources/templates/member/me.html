@@ -14,7 +14,55 @@
             <div class="flex-1 flex flex-col gap-6">
 
                 <th:block th:replace="~{fragments/profile-sidebar :: summary('info')}"></th:block>
+                <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
+                    <div class="md:col-span-2 bg-white p-8 rounded-2xl shadow-sm border border-gray-200">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-xl font-bold text-gray-800">오늘의 일정</h3>
+                            <a href="#" class="text-sm text-blue-500 hover:underline">전체보기</a>
+                        </div>
+
+                        <ul class="space-y-4">
+                            <li class="flex items-center gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                                <span class="w-2 h-10 bg-gray-600 rounded-full"></span>
+                                <div class="flex-1">
+                                    <h4 class="font-bold text-gray-800 text-sm">팀 주간 회의</h4>
+                                    <p class="text-xs text-gray-400">오후 2:00 - 3:30</p>
+                                </div>
+                                <input type="checkbox" class="w-5 h-5 rounded border-gray-300">
+                            </li>
+                            <li class="flex items-center gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                                <span class="w-2 h-10 bg-blue-400 rounded-full"></span>
+                                <div class="flex-1">
+                                    <h4 class="font-bold text-gray-800 text-sm">프로젝트 기획서 마감</h4>
+                                    <p class="text-xs text-gray-400">오후 6:00까지</p>
+                                </div>
+                                <input type="checkbox" class="w-5 h-5 rounded border-gray-300">
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+                            <h3 class="text-gray-500 text-xs font-bold uppercase mb-4 tracking-widest">나의 그룹</h3>
+                            <div class="flex items-center justify-between">
+                                <span class="text-3xl font-black text-gray-800" th:text="${groupCount == 0 ? '-' : (groupCount < 10 ? '0' + groupCount : groupCount)}"></span>
+                                <i class="fa-solid fa-users text-gray-200 text-3xl"></i>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+                            <h3 class="text-gray-500 text-xs font-bold uppercase mb-4 tracking-widest">이번 주 달성률</h3>
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-3xl font-black text-gray-800">75%</span>
+                                <i class="fa-solid fa-chart-line text-gray-200 text-3xl"></i>
+                            </div>
+                            <div class="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+                                <div class="bg-gray-600 h-full w-[75%]"></div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
 
 
             </div>

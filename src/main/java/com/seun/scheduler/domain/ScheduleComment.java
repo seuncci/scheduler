@@ -1,5 +1,7 @@
 package com.seun.scheduler.domain;
 
+import com.seun.scheduler.domain.member.entity.Member;
+import com.seun.scheduler.domain.schedule.entity.Schedule;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

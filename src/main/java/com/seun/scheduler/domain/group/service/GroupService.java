@@ -378,4 +378,9 @@ public class GroupService {
 
         groupInviteMemberRepository.save(GroupInviteMember.of(group, targetMember));
     }
+
+    public Long getMyGroupCount(String memberId) {
+
+        return groupMemberRepository.countByMember_MemberIdAndGroup_Status(memberId, GroupStatus.ACTIVE);
+    }
 }
