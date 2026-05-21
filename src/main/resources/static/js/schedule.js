@@ -132,7 +132,7 @@ function renderMonthlyView(year, month, events = []) {
         const colorClass = dayOfWeek === 0 ? 'text-red-400' : dayOfWeek === 6 ? 'text-blue-400' : 'text-gray-400';
 
         html += `
-        <div class="${hasEvent ? 'bg-indigo-50/30' : 'bg-white'} aspect-square p-1 md:p-2 hover:bg-indigo-100/40 relative group cursor-pointer border-r border-b border-gray-50">
+        <div onclick="handleSideDayClick('${dateStr}')" class="${hasEvent ? 'bg-indigo-50/30' : 'bg-white'} aspect-square p-1 md:p-2 hover:bg-indigo-100/40 relative group cursor-pointer border-r border-b border-gray-50">
             <span class="absolute top-2 left-2.5 text-[11px] font-bold ${colorClass}">${day}</span>
 
             <div class="hidden lg:block mt-6 space-y-1 w-full">
@@ -180,6 +180,12 @@ async function fetchMonthlySchedules() {
 
     try {
         const response = await fetch(`/api/schedules?startDate=${startDate}&endDate=${endDate}`);
+
+        if (response.status === 401 || response.redirected) {
+            handleSessionTimeout();
+            return;
+        }
+
         const result = await response.json();
         if (response.ok) {
             renderMonthlyView(currentYear, currentMonth, result.data);
@@ -309,7 +315,6 @@ function renderWeeklyView(year, month, events = []) {
     const sortedAllDay = allDayEvents.sort((a, b) => new Date(a.startDateTime || a.endDateTime) - new Date(b.startDateTime || b.endDateTime));
 
     const renderData = [];
-    const moreCounts = new Array(7).fill(0);
     let totalMoreCount = 0;
     let lastEndCol = 0;
 
@@ -326,15 +331,17 @@ function renderWeeklyView(year, month, events = []) {
         }
 
         if (isFree) {
-
             for (let c = startCol; c <= endCol; c++) layers[0][c] = true;
-            renderData.push({ event: e, startCol, span: endCol - startCol + 1, layer: 0 });
+
+            renderData.push({ event: e, startCol, span: endCol - startCol + 1, endCol: endCol, layer: 0 });
         } else {
             totalMoreCount++;
-            lastEndCol = Math.max(lastEndCol, endCol);
-            // for (let c = startCol; c <= endCol; c++) moreCounts[c]++;
         }
     });
+
+    if (renderData.length > 0 && renderData[0].endCol !== undefined) {
+        lastEndCol = renderData[0].endCol;
+    }
 
     let html = `
     <div class="min-w-[700px] animate-in fade-in slide-in-from-bottom-2 duration-500 flex flex-col h-full">
@@ -344,29 +351,32 @@ function renderWeeklyView(year, month, events = []) {
                 const isToday = d.toDateString() === new Date().toDateString();
                 const dayLabel = ['일','월','화','수','목','금','토'][d.getDay()];
                 const color = d.getDay() === 0 ? 'text-red-500' : d.getDay() === 6 ? 'text-blue-500' : 'text-gray-500';
-                return `<div class="flex flex-col items-center ${isToday ? 'ring-2 ring-indigo-500 ring-offset-4 rounded-xl pb-1 bg-indigo-50/50' : ''}">
+                const todayClass = isToday
+                                    ? 'outline outline-2 outline-indigo-500 outline-offset-[-2px] bg-indigo-50/60 rounded-2xl pb-1 px-1'
+                                    : '';
+                return `<div class="flex flex-col items-center justify-center min-h-[50px] ${todayClass}">
                     <span class="text-[10px] font-black ${isToday ? 'text-indigo-600' : color}">${dayLabel}</span>
                     <span class="text-xl font-black ${isToday ? 'text-indigo-600' : 'text-gray-900'}">${d.getDate()}</span>
                 </div>`;
             }).join('')}
         </div>
 
-        <div class="grid grid-cols-[60px_1fr_1fr_1fr_1fr_1fr_1fr_1fr] bg-white border-x border-b border-gray-50 text-[10px] relative min-h-[50px]">
+        <div class="grid grid-cols-[60px_1fr_1fr_1fr_1fr_1fr_1fr_1fr] bg-white border-x border-b border-gray-50 text-[10px] relative min-h-[80px]">
             <div class="border-r border-gray-100 flex items-center justify-center text-gray-400 font-black uppercase tracking-tighter shrink-0 z-20 bg-white">종일</div>
-            ${days.map(() => `<div class="border-r border-gray-60 min-h-[60px]"></div>`).join('')}
+
+            ${days.map(() => `<div class="border-r border-gray-50 min-h-[80px]"></div>`).join('')}
 
             <div class="absolute inset-0 left-[60px] pointer-events-none p-1">
                 <div class="relative w-full h-full">
                     ${renderData.map(d => {
                         const s = new Date(d.event.startDateTime || d.event.endDateTime);
                         const ed = new Date(d.event.endDateTime);
-
                         const dateRange = `(${s.getMonth() + 1}/${s.getDate()} ~ ${ed.getMonth() + 1}/${ed.getDate()})`;
 
                         return `
                         <div class="absolute pointer-events-auto transition-all"
                              style="top: 8px; left: ${(d.startCol * 14.28)}%; width: ${(d.span * 14.28)}%; padding: 2px; z-index: 10;">
-                            <div class="h-8 ${d.event.color || 'bg-indigo-500'} text-white rounded-full px-4 flex items-center font-black shadow-sm truncate border border-white/20 text-[10px]">
+                            <div onclick="loadScheduleDetail(${d.event.id})" class="h-8 ${d.event.color || 'bg-indigo-500'} text-white rounded-full px-4 flex items-center font-black shadow-sm truncate border border-white/20 text-[10px] cursor-pointer hover:opacity-90 transition-opacity">
                                ${d.event.title} ${dateRange}
                             </div>
                         </div>`;
@@ -374,9 +384,10 @@ function renderWeeklyView(year, month, events = []) {
 
                     ${totalMoreCount > 0 ? `
                         <div class="absolute pointer-events-auto"
-                             style="top: 36px; left: ${(lastEndCol * 14.28)}%; width: 14.28%; display: flex; justify-content: center; z-index: 10;">
-                            <div class="px-3 py-1 bg-indigo-50 border border-indigo-100 rounded-full shadow-sm">
-                                <p class="text-[10px] font-black text-indigo-600">+ ${totalMoreCount}개 더보기</p>
+                             style="top: 46px; left: ${(lastEndCol * 14.28)}%; width: 14.28%; display: flex; justify-content: center; z-index: 20;">
+                            <div onclick="handleSideDayClick('${formatDate(startOfWeek)}', '${formatDate(endOfWeek)}', true)"
+                                 class="px-2 py-0.5 bg-indigo-50 border border-indigo-100 rounded-full shadow-sm cursor-pointer hover:bg-indigo-100/80 hover:border-indigo-200 text-indigo-600 transition-all active:scale-95 select-none text-[9px] font-black text-center">
+                                + ${totalMoreCount}개 더보기
                             </div>
                         </div>
                     ` : ''}
@@ -399,7 +410,7 @@ function renderWeeklyView(year, month, events = []) {
                         return `
                         <div class="h-24 border-b border-gray-100/50 p-2 relative">
                             ${isDeadline ? `
-                            <div class="p-2 bg-white border-2 border-rose-500 rounded-xl shadow-md cursor-pointer h-full flex flex-col justify-center overflow-hidden">
+                            <div onclick="loadScheduleDetail(${e.id})" class="p-2 bg-white border-2 border-rose-500 rounded-xl shadow-md cursor-pointer h-full flex flex-col justify-center overflow-hidden hover:shadow-lg transition-shadow">
                                <div class="flex items-center gap-1.5 w-full">
                                  <div class="w-2 h-2 bg-rose-500 rounded-full animate-pulse shrink-0"></div>
                                  <div class="min-w-0 flex-1">
@@ -409,7 +420,7 @@ function renderWeeklyView(year, month, events = []) {
                                </div>
                             </div>
                         ` : `
-                            <div class="p-3 ${e.color || 'bg-indigo-600'} text-white rounded-2xl shadow-lg transition-transform hover:scale-[1.02] cursor-pointer h-full overflow-hidden">
+                            <div onclick="loadScheduleDetail(${e.id})" class="p-3 ${e.color || 'bg-indigo-600'} text-white rounded-2xl shadow-lg transition-transform hover:scale-[1.02] cursor-pointer h-full overflow-hidden">
                                 <p class="text-[10px] font-black opacity-80 uppercase truncate">${formatRange(e.startDateTime, e.endDateTime)}</p>
                                 <p class="text-[12px] font-black mt-0.5 truncate">${e.title}</p>
                             </div>
@@ -423,7 +434,6 @@ function renderWeeklyView(year, month, events = []) {
 
     view.innerHTML = html;
 
-    // 제목 업데이트 (명시적 ID 사용 권장)
     const headerTitle = document.querySelector('header h2') || document.querySelector('h2');
     if (headerTitle) headerTitle.innerText = `${year}년 ${month}월`;
 }
@@ -456,6 +466,12 @@ async function fetchWeeklySchedules() {
 
     try {
         const response = await fetch(`/api/schedules?startDate=${startDate}&endDate=${endDate}`);
+
+        if (response.status === 401 || response.redirected) {
+            handleSessionTimeout();
+            return;
+        }
+
         const result = await response.json();
         if (response.ok) {
             renderWeeklyView(currentYear, currentMonth, result.data);
@@ -502,40 +518,39 @@ const view = document.getElementById('calendar-view');
       window.history.pushState({ year: currentYear, month: currentMonth, day: currentDay, v: viewType }, '', newUrl);
   }
 
-  document.querySelectorAll('.flex.items-center.bg-gray-50 button').forEach((btn, idx) => {
-      btn.onclick = () => {
+  document.querySelectorAll('#calendar-nav-bar button').forEach((btn, idx) => {
+    btn.onclick = () => {
+        const isWeekly = bW.classList.contains('text-indigo-600');
+        const date = new Date(currentYear, currentMonth - 1, currentDay);
 
-          const isWeekly = bW.classList.contains('text-indigo-600');
-          const date = new Date(currentYear, currentMonth - 1, currentDay);
+        if (idx === 0) {
+            if (isWeekly) date.setDate(date.getDate() - 7); // 7일 전
+            else {
+              date.setMonth(date.getMonth() - 1);
+              date.setDate(1);
+            }
+        } else if (idx === 1) {
+            const now = new Date();
+            date.setFullYear(now.getFullYear());
+            date.setMonth(now.getMonth());
+            date.setDate(now.getDate());
+        } else if (idx === 2) {
+            if (isWeekly) date.setDate(date.getDate() + 7); // 7일 후
+            else {
+              date.setMonth(date.getMonth() + 1);
+              date.setDate(1);
+            }
+        }
 
-          if (idx === 0) {
-              if (isWeekly) date.setDate(date.getDate() - 7); // 7일 전
-              else {
-                date.setMonth(date.getMonth() - 1);
-                date.setDate(1);
-              }
-          } else if (idx === 1) {
-              const now = new Date();
-              date.setFullYear(now.getFullYear());
-              date.setMonth(now.getMonth());
-              date.setDate(now.getDate());
-          } else if (idx === 2) {
-              if (isWeekly) date.setDate(date.getDate() + 7); // 7일 후
-              else {
-                date.setMonth(date.getMonth() + 1);
-                date.setDate(1);
-              }
-          }
+        currentYear = date.getFullYear();
+        currentMonth = date.getMonth() + 1;
+        currentDay = date.getDate();
 
-          currentYear = date.getFullYear();
-          currentMonth = date.getMonth() + 1;
-          currentDay = date.getDate();
-
-          updateURL();
-          if (isWeekly) fetchWeeklySchedules();
-          else fetchMonthlySchedules();
-      };
-  });
+        updateURL();
+        if (isWeekly) fetchWeeklySchedules();
+        else fetchMonthlySchedules();
+    };
+});
 
   bM.onclick = function() { changeTab('monthly'); };
   bW.onclick = function() { changeTab('weekly'); };
@@ -585,12 +600,24 @@ const view = document.getElementById('calendar-view');
   }
 
   function openAddEventModal() {
-    const modal = document.getElementById('event-modal');
+      const modal = document.getElementById('event-modal');
+      if (!modal) return;
 
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
+      document.getElementById('event-form').reset();
 
-    document.body.style.overflow = 'hidden';
+      document.getElementById('modal-mode-title').innerText = "새로운 일정 추가";
+      document.getElementById('modal-mode-desc').innerText = "멋진 하루를 계획해 보세요!";
+      document.getElementById('submit-btn-text').innerText = "일정 저장하기";
+
+      document.getElementById('edit-mode-header').classList.add('hidden');
+      document.getElementById('modal-status-checkbox-container').classList.add('hidden');
+
+      document.getElementById('modal-target-type-container').classList.remove('hidden');
+      document.getElementById('group-select-container').classList.add('hidden');
+
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      document.body.style.overflow = 'hidden';
   }
 
   function closeAddEventModal() {
@@ -698,3 +725,505 @@ const view = document.getElementById('calendar-view');
           showToast('error', '서버와의 통신에 실패했습니다.');
       }
   };
+
+async function handleSideDayClick(dateStr, endDateStr = null, hasEvent = false) {
+    const container = document.getElementById('side-schedules-container');
+    const dateTitle = document.getElementById('side-selected-date');
+    const listBody = document.getElementById('side-schedule-list');
+
+    if (!container || !dateTitle || !listBody) return;
+
+    if (endDateStr) {
+        const startParts = dateStr.split('-');
+        const endParts = endDateStr.split('-');
+        dateTitle.innerText = `${parseInt(startParts[1])}월 ${parseInt(startParts[2])}일 ~ ${parseInt(endParts[1])}월 ${parseInt(endParts[2])}일`;
+    } else {
+        const dateParts = dateStr.split('-');
+        dateTitle.innerText = `${dateParts[0]}년 ${dateParts[1]}월 ${dateParts[2]}일`;
+    }
+
+    const reqStartDate = dateStr;
+    const reqEndDate = endDateStr ? endDateStr : dateStr;
+
+    try {
+        const response = await fetch(`/api/schedules?startDate=${reqStartDate}&endDate=${reqEndDate}`);
+
+        if (response.status === 401 || response.redirected) {
+            handleSessionTimeout();
+            return;
+        }
+
+        const result = await response.json();
+
+        if (response.ok && result.data && result.data.length > 0) {
+            listBody.innerHTML = result.data.map(event => {
+
+                const isGroup = event.groupId !== null && event.groupId !== undefined;
+                const badgeText = isGroup ? '그룹' : '개인';
+
+                const dbColor = event.color || 'bg-indigo-500';
+                let bgClass = 'bg-indigo-50/40 border-indigo-100';
+                let textClass = 'text-indigo-900';
+                let badgeColor = 'text-indigo-600 border-indigo-100';
+                let iconColor = 'text-indigo-500';
+
+                if (dbColor.includes('bg-rose-500')) {
+                    bgClass = 'bg-rose-50/40 border-rose-100';
+                    textClass = 'text-rose-900';
+                    badgeColor = 'text-rose-500 border-rose-100';
+                    iconColor = 'text-rose-500';
+                } else if (dbColor.includes('bg-emerald-500')) {
+                    bgClass = 'bg-emerald-50/40 border-emerald-100';
+                    textClass = 'text-emerald-900';
+                    badgeColor = 'text-emerald-500 border-emerald-100';
+                    iconColor = 'text-emerald-500';
+                } else if (dbColor.includes('bg-gray-800')) {
+                    bgClass = 'bg-slate-50 border-slate-200';
+                    textClass = 'text-slate-900';
+                    badgeColor = 'text-slate-600 border-slate-200';
+                    iconColor = 'text-slate-500';
+                }
+
+                const timeLabel = formatSideTimeLabel(event.startDateTime, event.endDateTime);
+                const serializedEvent = encodeURIComponent(JSON.stringify(event));
+
+                return `
+                    <div onclick="loadScheduleDetail(${event.id})"
+                         class="p-4 ${bgClass} border rounded-2xl hover:shadow-md transition-all cursor-pointer group animate-in fade-in slide-in-from-bottom-2 duration-200">
+                      <div class="flex items-center justify-between mb-1">
+                        <span class="text-[10px] font-black uppercase tracking-tight ${textClass.replace('900', '600')}">${timeLabel}</span>
+                        <span class="text-[9px] font-bold bg-white border ${badgeColor} px-1.5 py-0.5 rounded-md">${badgeText}</span>
+                      </div>
+                      <p class="text-xs font-bold ${textClass} truncate">${isGroup ? '👥 ' : '🔒 '}${event.title}</p>
+                      ${event.location ? `
+                        <p class="text-[10px] ${textClass.replace('900', '600')}/70 mt-1 font-medium flex items-center gap-1">
+                          <i class="fa-solid fa-location-dot text-[9px] ${iconColor}"></i> ${event.location}
+                        </p>
+                      ` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        else {
+            listBody.innerHTML = `
+                <div class="py-12 px-4 text-center flex flex-col items-center justify-center animate-in fade-in zoom-in-95 duration-200 min-h-[280px] relative overflow-hidden">
+                  <div class="w-14 h-14 bg-gray-50 rounded-full flex items-center justify-center text-gray-300 mb-4 border border-gray-100 shadow-inner">
+                    <i class="fa-solid fa-calendar-xmark text-xl"></i>
+                  </div>
+                  <h5 class="text-xs font-bold text-gray-700">등록된 일정이 없습니다</h5>
+                  <p class="text-[10px] text-gray-400 mt-1.5 font-medium tracking-tight">오늘 하루를 자유롭고 여유롭게 보내세요!</p>
+                  <button onclick="openAddEventModal()" class="mt-6 px-4 py-2 bg-gray-50 border border-gray-200 hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-600 text-gray-500 text-[10px] font-bold rounded-xl transition-all flex items-center gap-1.5 shadow-sm active:scale-95">
+                    <i class="fa-solid fa-plus text-[8px]"></i> 이곳에 첫 일정 추가하기
+                  </button>
+                  <div class="absolute -bottom-6 -right-4 text-indigo-100/40 pointer-events-none select-none text-8xl -rotate-12">
+                    <i class="fa-solid fa-mug-hot"></i>
+                  </div>
+                </div>
+            `;
+        }
+    } catch (e) {
+        console.error("사이드바 일정 로드 실패", e);
+    }
+
+    container.classList.remove('hidden');
+
+    if (window.innerWidth < 1024) {
+        container.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }
+}
+
+function formatSideTimeLabel(startStr, endStr) {
+    const e = new Date(endStr);
+    if (!startStr) {
+        return `~ ${formatTimeOnly(endStr)} 마감`;
+    }
+
+    const s = new Date(startStr);
+    const sDateStr = `${s.getFullYear()}-${s.getMonth()}-${s.getDate()}`;
+    const eDateStr = `${e.getFullYear()}-${e.getMonth()}-${e.getDate()}`;
+
+    if (sDateStr === eDateStr) {
+        const startM = s.getHours() < 12 ? '오전' : '오후';
+        const startH = String(s.getHours() % 12 || 12).padStart(2, '0');
+        const startMin = String(s.getMinutes()).padStart(2, '0');
+
+        const endM = e.getHours() < 12 ? '오전' : '오후';
+        const endH = String(e.getHours() % 12 || 12).padStart(2, '0');
+        const endMin = String(e.getMinutes()).padStart(2, '0');
+
+        if (startM === endM) {
+            return `${startM} ${startH}:${startMin} - ${endH}:${endMin}`;
+        }
+        return `${startM} ${startH}:${startMin} - ${endM} ${endH}:${endMin}`;
+    } else {
+        const startMonth = String(s.getMonth() + 1).padStart(2, '0');
+        const startDay = String(s.getDate()).padStart(2, '0');
+        const endMonth = String(e.getMonth() + 1).padStart(2, '0');
+        const endDay = String(e.getDate()).padStart(2, '0');
+        return `${startMonth}/${startDay} ~ ${endMonth}/${endDay}`;
+    }
+}
+
+function handleSessionTimeout() {
+
+    showToast('error', '로그인 세션이 만료되었습니다. 다시 로그인해 주세요.');
+
+    setTimeout(() => {
+        window.location.href = '/members/login';
+    }, 2000);
+}
+
+async function loadScheduleDetail(scheduleId) {
+    try {
+        const response = await fetch(`/api/schedules/${scheduleId}`);
+
+        if (response.status === 401 || response.redirected) {
+            handleSessionTimeout();
+            return;
+        }
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            const errorMessage = result && result.message ? result.message : "일정 상세 정보를 가져오는 데 실패했습니다.";
+            showToast('error', errorMessage);
+            return;
+        }
+
+        if (result.data) {
+            openDetailEventModal(result.data);
+        }
+    } catch (e) {
+        console.error("일정 상세 조회 중 에러 발생:", e);
+        showToast('error', '서버와의 통신이 원활하지 않습니다.');
+    }
+}
+
+function openDetailEventModal(event) {
+    const modal = document.getElementById('detail-event-modal');
+    if (!modal) return;
+
+    const statusUncheckIcon = document.getElementById('detail-status-uncheck');
+    const statusCheckedIcon = document.getElementById('detail-status-checked');
+    const statusTextSpan = document.getElementById('detail-status-text');
+
+    if (statusUncheckIcon && statusCheckedIcon && statusTextSpan) {
+        if (event.isCompleted === true) {
+            statusUncheckIcon.classList.add('hidden');
+            statusCheckedIcon.classList.remove('hidden');
+            statusTextSpan.innerText = "완료";
+            statusTextSpan.className = "text-xs font-bold text-indigo-600 tracking-tight";
+        } else {
+            statusCheckedIcon.classList.add('hidden');
+            statusUncheckIcon.classList.remove('hidden');
+            statusTextSpan.innerText = "진행 중";
+            statusTextSpan.className = "text-xs font-medium text-gray-950 tracking-tight";
+        }
+    }
+
+    const titleEl = modal.querySelector('#detail-title');
+    if (titleEl) titleEl.innerText = event.title;
+
+    const timeEl = modal.querySelector('#detail-datetime');
+    if (timeEl) {
+        timeEl.innerText = formatDetailTimeLabel(event.startDateTime, event.endDateTime);
+    }
+
+    const targetTypeBadge = modal.querySelector('#detail-targetType');
+    const isGroup = event.groupId !== null && event.groupId !== undefined;
+    if (targetTypeBadge) {
+        if (isGroup) {
+            targetTypeBadge.innerText = "👥 그룹 일정";
+            targetTypeBadge.className = "inline-flex items-center gap-1 text-[10px] font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full uppercase tracking-tighter";
+        } else {
+            targetTypeBadge.innerText = "🔒 개인 일정";
+            targetTypeBadge.className = "inline-flex items-center gap-1 text-[10px] font-black text-gray-600 bg-gray-100 px-3 py-1 rounded-full uppercase tracking-tighter";
+        }
+    }
+
+    const locationEl = modal.querySelector('#detail-location');
+    if (locationEl) {
+        const locationRow = locationEl.closest('.flex.items-baseline');
+        if (locationRow && locationRow.parentElement) {
+            const outmostLocationDiv = locationRow.parentElement;
+            if (event.location && event.location.trim() !== '') {
+                locationEl.innerText = event.location;
+                outmostLocationDiv.classList.remove('hidden');
+            } else {
+                outmostLocationDiv.classList.add('hidden');
+            }
+        }
+    }
+
+    const contentEl = modal.querySelector('#detail-content');
+    if (contentEl) {
+        const contentRow = contentEl.closest('.flex.items-baseline');
+        if (contentRow && contentRow.parentElement) {
+            const outmostContentDiv = contentRow.parentElement;
+            if (event.content && event.content.trim() !== '') {
+                contentEl.innerText = event.content;
+                outmostContentDiv.classList.remove('hidden');
+            } else {
+                outmostContentDiv.classList.add('hidden');
+            }
+        }
+    }
+
+    const groupItemRow = document.getElementById('detail-group-item');
+    const creatorNameSpan = document.getElementById('detail-creator-name');
+    const commentSection = document.getElementById('detail-comment-section');
+
+    const creatorRow = creatorNameSpan ? creatorNameSpan.closest('.flex.items-center.gap-3') : null;
+    const outmostCreatorDiv = creatorRow ? creatorRow.parentElement : null;
+    const timeRow = timeEl ? timeEl.closest('.flex.items-baseline').parentElement : null;
+
+    if (isGroup) {
+        if (timeRow) timeRow.classList.remove('!mt-0');
+        if (groupItemRow) groupItemRow.classList.remove('hidden');
+        if (outmostCreatorDiv) outmostCreatorDiv.classList.remove('hidden');
+        if (commentSection) commentSection.classList.remove('hidden');
+
+        const groupNameSpan = document.getElementById('detail-group-name');
+        if (groupNameSpan) groupNameSpan.innerText = event.groupName || "소속 그룹 없음";
+
+        if (creatorNameSpan) creatorNameSpan.innerText = event.profileName || "정보 없음";
+
+        const groupImage = document.getElementById('detail-group-image');
+        const groupIcon = document.getElementById('detail-group-icon');
+        if (groupImage && groupIcon) {
+            if (event.groupImage && event.groupImage.trim() !== "") {
+                groupImage.src = '/group/' + event.groupImage;
+                groupImage.classList.remove('hidden');
+                groupIcon.classList.add('hidden');
+            } else {
+                groupIcon.classList.remove('hidden');
+                groupImage.classList.add('hidden');
+            }
+        }
+
+        let profileImgEl = modal.querySelector('#detail-profile-image');
+        let defaultUserIcon = creatorRow ? creatorRow.querySelector('.fa-user') : null;
+
+        if (event.profileImage && event.profileImage.trim() !== "") {
+            if (!profileImgEl && defaultUserIcon) {
+                profileImgEl = document.createElement('img');
+                profileImgEl.id = 'detail-profile-image';
+                profileImgEl.className = 'w-5 h-5 rounded-full object-cover border border-gray-100 shadow-sm shrink-0 mr-1.5';
+                defaultUserIcon.parentElement.insertBefore(profileImgEl, creatorNameSpan);
+            }
+            if (profileImgEl) {
+                profileImgEl.src = '/member/' + event.profileImage;
+                profileImgEl.classList.remove('hidden');
+            }
+            if (defaultUserIcon) defaultUserIcon.classList.add('hidden');
+        } else {
+            if (profileImgEl) profileImgEl.classList.add('hidden');
+            if (defaultUserIcon) defaultUserIcon.classList.remove('hidden');
+        }
+
+    } else {
+        if (timeRow) timeRow.classList.add('!mt-0');
+        if (groupItemRow) groupItemRow.classList.add('hidden');
+        if (outmostCreatorDiv) outmostCreatorDiv.classList.add('hidden');
+        if (commentSection) commentSection.classList.add('hidden');
+    }
+
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    document.body.style.overflow = 'hidden';
+}
+
+function formatDetailTimeLabel(startStr, endStr) {
+    const e = new Date(endStr);
+
+    if (!startStr) {
+        const m = String(e.getMonth() + 1).padStart(2, '0');
+        const d = String(e.getDate()).padStart(2, '0');
+        const ampm = e.getHours() < 12 ? '오전' : '오후';
+        const h = String(e.getHours() % 12 || 12).padStart(2, '0');
+        const min = String(e.getMinutes()).padStart(2, '0');
+        return `${m}월 ${d}일 ${ampm} ${h}:${min} 까지`;
+    }
+
+    const s = new Date(startStr);
+    const sDateStr = `${s.getFullYear()}-${s.getMonth()}-${s.getDate()}`;
+    const eDateStr = `${e.getFullYear()}-${e.getMonth()}-${e.getDate()}`;
+
+    if (sDateStr === eDateStr) {
+        const sM = s.getHours() < 12 ? '오전' : '오후';
+        const sH = String(s.getHours() % 12 || 12).padStart(2, '0');
+        const sMin = String(s.getMinutes()).padStart(2, '0');
+
+        const eM = e.getHours() < 12 ? '오전' : '오후';
+        const eH = String(e.getHours() % 12 || 12).padStart(2, '0');
+        const eMin = String(e.getMinutes()).padStart(2, '0');
+
+        return `${s.getMonth()+1}월 ${s.getDate()}일 ${sM} ${sH}:${sMin} ~ ${eM} ${eH}:${eMin}`;
+    }
+    else {
+        const sM = String(s.getMonth() + 1).padStart(2, '0');
+        const sD = String(s.getDate()).padStart(2, '0');
+        const eM = String(e.getMonth() + 1).padStart(2, '0');
+        const eD = String(e.getDate()).padStart(2, '0');
+        return `${sM}/${sD} ~ ${eM}/${eD}`;
+    }
+}
+
+function closeDetailEventModal() {
+    const modal = document.getElementById('detail-event-modal');
+    if (!modal) return;
+
+    modal.classList.add('hidden');
+    document.body.style.overflow = 'auto';
+}
+
+function toggleEditCommentForm(commentId) {
+    const textParagraph = document.getElementById(`comment-text-${commentId}`);
+    const editBox = document.getElementById(`comment-edit-box-${commentId}`);
+
+    if (!textParagraph || !editBox) return;
+
+    if (editBox.classList.contains('hidden')) {
+        editBox.classList.remove('hidden');
+        textParagraph.classList.add('hidden');
+    } else {
+        editBox.classList.add('hidden');
+        textParagraph.classList.remove('hidden');
+    }
+}
+
+function saveCommentEdit(commentId) {
+    const editInput = document.getElementById(`comment-edit-input-${commentId}`);
+    const updatedContent = editInput.value;
+
+    if (!updatedContent.trim()) {
+        showToast('error', '댓글 내용을 입력해 주세요.');
+        return;
+    }
+
+    document.getElementById(`comment-text-${commentId}`).innerText = updatedContent;
+    toggleEditCommentForm(commentId);
+}
+
+function openDeleteCommentModal(commentId) {
+    const modal = document.getElementById('deleteCommentConfirmModal');
+    if (modal) {
+        modal.classList.remove('hidden');
+
+        modal.style.display = 'flex';
+
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function closeDeleteCommentModal(e) {
+    if (e) {
+        if (typeof e.preventDefault === 'function') e.preventDefault();
+        if (typeof e.stopPropagation === 'function') e.stopPropagation();
+    }
+
+    const modal = document.getElementById('deleteCommentConfirmModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }
+}
+
+function openDeleteScheduleModal() {
+    const modal = document.getElementById('deleteScheduleConfirmModal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function closeDeleteScheduleModal() {
+    const modal = document.getElementById('deleteScheduleConfirmModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }
+}
+
+function handleEditScheduleTrigger() {
+    closeDetailEventModal();
+    document.body.style.overflow = 'hidden';
+
+    const eventModal = document.getElementById('event-modal');
+    if (!eventModal) return;
+
+    document.getElementById('modal-mode-title').innerText = "일정 정보 수정";
+    document.getElementById('modal-mode-desc').innerText = "기존 일정의 세부 내용을 변경합니다.";
+    document.getElementById('submit-btn-text').innerText = "수정 완료하기";
+
+    document.getElementById('modal-target-type-container').classList.add('hidden');
+    document.getElementById('group-select-container').classList.add('hidden');
+
+    const editHeader = document.getElementById('edit-mode-header');
+    const editIcon = document.getElementById('edit-mode-icon');
+    const editLabel = document.getElementById('edit-mode-label');
+    const editValue = document.getElementById('edit-mode-value');
+
+    const isGroupEvent = true;
+    const currentGroupName = "개발팀 내부 프로젝트";
+
+    if (editHeader) {
+
+        editHeader.classList.remove('hidden');
+
+        if (isGroupEvent) {
+
+            editHeader.classList.remove('bg-gray-50', 'border-gray-100');
+            editHeader.classList.add('bg-indigo-50/50', 'border-indigo-100');
+
+            editIcon.className = "fa-solid fa-users text-xs text-indigo-500";
+            editLabel.className = "text-xs font-bold text-gray-600 shrink-0";
+            editLabel.innerText = "소속 그룹 :";
+            editValue.className = "text-xs font-black text-indigo-700";
+            editValue.innerText = currentGroupName;
+        } else {
+
+            editHeader.classList.remove('bg-indigo-50/50', 'border-indigo-100');
+            editHeader.classList.add('bg-gray-50', 'border-gray-100');
+
+            editIcon.className = "fa-solid fa-lock text-xs text-gray-400";
+            editLabel.className = "text-xs font-bold text-gray-500 shrink-0";
+            editLabel.innerText = "일정 종류 :";
+            editValue.className = "text-xs font-bold text-gray-800";
+            editValue.innerText = "🔒 개인 일정";
+        }
+    }
+
+    document.getElementById('modal-status-checkbox-container').classList.remove('hidden');
+
+    eventModal.classList.remove('hidden');
+    eventModal.classList.add('flex');
+}
+
+function closeAddEventModal() {
+    const modal = document.getElementById('event-modal');
+    const groupContainer = document.getElementById('group-select-container');
+
+    if (modal) {
+        modal.classList.replace('flex', 'hidden');
+        document.body.style.overflow = 'auto';
+
+        document.getElementById('event-form').reset();
+
+        document.getElementById('modal-mode-title').innerText = "새로운 일정 추가";
+        document.getElementById('modal-mode-desc').innerText = "멋진 하루를 계획해 보세요!";
+        document.getElementById('submit-btn-text').innerText = "일정 저장하기";
+
+        document.getElementById('modal-target-type-container').classList.remove('hidden');
+        document.getElementById('edit-mode-group-header').classList.add('hidden');
+        document.getElementById('modal-status-checkbox-container').classList.add('hidden');
+
+        if (groupContainer) {
+            groupContainer.classList.add('hidden');
+        }
+    }
+}

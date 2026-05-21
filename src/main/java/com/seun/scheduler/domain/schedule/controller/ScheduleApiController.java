@@ -1,6 +1,7 @@
 package com.seun.scheduler.domain.schedule.controller;
 
 import com.seun.scheduler.domain.schedule.dto.ScheduleCreateRequest;
+import com.seun.scheduler.domain.schedule.dto.ScheduleDetailResponse;
 import com.seun.scheduler.domain.schedule.dto.ScheduleListResponse;
 import com.seun.scheduler.domain.schedule.dto.ScheduleRangeRequest;
 import com.seun.scheduler.global.common.CommonResponse;
@@ -33,6 +34,12 @@ public class ScheduleApiController {
     public CommonResponse<List<ScheduleListResponse>> getSchedulesByRange(@AuthenticationPrincipal CustomUserDetails userDetails, @ModelAttribute ScheduleRangeRequest request) {
 
         return CommonResponse.result(ResultCode.SCHEDULE_GET_SUCCESS, scheduleService.getSchedulesByRange(userDetails.getUsername(), request));
+    }
+
+    @GetMapping("/{scheduleId}")
+    public CommonResponse<ScheduleDetailResponse> getScheduleDetail(@AuthenticationPrincipal CustomUserDetails userDetails, @PathVariable("scheduleId") Long scheduleId) {
+
+        return CommonResponse.result(ResultCode.SCHEDULE_DETAIL_SUCCESS, scheduleService.getScheduleDetail(userDetails.getUsername(), scheduleId));
     }
 
     /*

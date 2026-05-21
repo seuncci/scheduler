@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface ScheduleRepository extends JpaRepository <Schedule, Long> {
 
@@ -21,4 +22,7 @@ public interface ScheduleRepository extends JpaRepository <Schedule, Long> {
             "AND ((s.startDateTime IS NOT NULL AND s.startDateTime <= :endDateTime AND s.endDateTime >= :startDateTime) " +
             " OR (s.startDateTime IS NULL AND s.endDateTime >= :startDateTime AND s.endDateTime <= :endDateTime))")
     List<Schedule> findGroupSchedules(@Param("memberId") String memberId, @Param("startDateTime") LocalDateTime startDateTime,  @Param("endDateTime") LocalDateTime endDateTime);
+
+    @Query("SELECT s FROM Schedule s LEFT JOIN FETCH s.group JOIN FETCH s.member WHERE s.id = :scheduleId")
+    Optional<Schedule> findWithGroupAndMemberById(@Param("scheduleId") Long ScheduleId);
 }

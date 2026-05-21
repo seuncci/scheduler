@@ -66,7 +66,23 @@ public enum ResultCode {
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, 4014, "존재하지 않는 회원입니다."),
     INVALID_INVITATION(HttpStatus.FORBIDDEN, 4015, "유효하지 않은 초대장입니다."),
     INACTIVE_GROUP(HttpStatus.BAD_REQUEST, 4016, "삭제되거나 비활성화된 그룹의 초대입니다."),
-    ALREADY_PROCESSED_INVITE(HttpStatus.BAD_REQUEST, 4017, "이미 처리된 초대장입니다.");
+    ALREADY_PROCESSED_INVITE(HttpStatus.BAD_REQUEST, 4017, "이미 처리된 초대장입니다."),
+
+    // 일정 관련 코드
+    SCHEDULE_CREATE_SUCCESS(HttpStatus.CREATED, 2019, "일정이 등록되었습니다."),
+    SCHEDULE_GET_SUCCESS(HttpStatus.OK, 2020, "일정 내역을 불러왔습니다."),
+    SCHEDULE_DETAIL_SUCCESS(HttpStatus.OK, 2021, "일정 상세 정보를 조회했습니다."),
+
+    JOINED_GROUP_NOT_FOUND(HttpStatus.BAD_REQUEST, 4018, "가입된 그룹이 없습니다."),
+    GROUP_SELECTION_REQUIRED(HttpStatus.BAD_REQUEST, 4019, "그룹을 선택해 주세요."),
+    SCHEDULE_TITLE_REQUIRED(HttpStatus.BAD_REQUEST, 4020, "일정명을 입력해 주세요."),
+    SCHEDULE_END_TIME_REQUIRED(HttpStatus.BAD_REQUEST, 4021, "일정 종료 시간을 선택해 주세요."),
+    SCHEDULE_COLOR_REQUIRED(HttpStatus.BAD_REQUEST, 4022, "배경색을 선택해 주세요."),
+    INVALID_SCHEDULE_TIME(HttpStatus.BAD_REQUEST, 4023, "종료 시간은 시작 시간 이후여야 합니다."),
+    SCHEDULE_DATE_REQUIRED(HttpStatus.BAD_REQUEST, 4024, "날짜를 선택해 주세요."),
+    SCHEDULE_TYPE_REQUIRED(HttpStatus.BAD_REQUEST, 4025, "일정 분류를 선택해 주세요."),
+    SCHEDULE_NOT_FOUND(HttpStatus.NOT_FOUND, 4026, "존재하지 않는 일정입니다."),
+    ACCESS_DENIED_SCHEDULE(HttpStatus.FORBIDDEN, 4027, "해당 일정을 볼 수 있는 권한이 없습니다.");
 
     private HttpStatus status;
     private int code;

@@ -8,6 +8,7 @@ import com.seun.scheduler.domain.group.repository.GroupRepository;
 import com.seun.scheduler.domain.member.entity.Member;
 import com.seun.scheduler.domain.member.repository.MemberRepository;
 import com.seun.scheduler.domain.schedule.dto.ScheduleCreateRequest;
+import com.seun.scheduler.domain.schedule.dto.ScheduleDetailResponse;
 import com.seun.scheduler.domain.schedule.dto.ScheduleListResponse;
 import com.seun.scheduler.domain.schedule.dto.ScheduleRangeRequest;
 import com.seun.scheduler.domain.schedule.entity.Schedule;
@@ -89,6 +90,26 @@ public class ScheduleService {
                 .map(ScheduleListResponse::from)
                 .sorted(Comparator.comparing(ScheduleListResponse::getStartDateTime, Comparator.nullsLast(Comparator.naturalOrder())))
                 .collect(Collectors.toList());
+    }
+
+    public ScheduleDetailResponse getScheduleDetail(String memberId, Long scheduleId) {
+
+        Member member = memberRepository.findByMemberId(memberId).orElseThrow(() -> new CustomException(ResultCode.MEMBER_NOT_FOUND));
+        Schedule schedule = scheduleRepository.findWithGroupAndMemberById(scheduleId).orElseThrow(() -> new CustomException(ResultCode.SCHEDULE_NOT_FOUND));
+
+        if (schedule.getGroup() == null) {
+
+            if (!memberId.equals(schedule.getMember().getMemberId())) {
+
+                throw new CustomException(ResultCode.ACCESS_DENIED_SCHEDULE);
+            }
+        } else {
+
+            groupMemberRepository.findByGroupAndMemberAndStatus(schedule.getGroup(), member,
+                    GroupMemberStatus.ACTIVE).orElseThrow(() -> new CustomException(ResultCode.NOT_GROUP_MEMBER));
+        }
+
+        return ScheduleDetailResponse.from(schedule);
     }
 
     /*
