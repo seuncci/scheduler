@@ -203,7 +203,6 @@
       </div>
     </div>
   </div>
-
   <div id="detail-event-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-md z-[9999] items-center justify-center p-4 animate-in fade-in duration-300">
     <div class="bg-white w-full max-w-xl rounded-[2rem] shadow-2xl border border-gray-100 overflow-hidden flex flex-col max-h-[90vh]">
 
@@ -211,7 +210,6 @@
         <div class="space-y-1 flex-1 pr-6">
           <div class="flex items-center gap-4">
             <span id="detail-targetType" class="inline-flex items-center gap-1 text-[10px] font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full uppercase tracking-tighter">
-              👥 그룹 일정
             </span>
             <span id="detail-groupName" class="hidden"><span id="detail-groupName-text"></span></span>
           </div>
@@ -321,23 +319,23 @@
             </div>
           </div>
 
-<!--          <div id="detail-comment-list" class="space-y-4">-->
+          <!--          <div id="detail-comment-list" class="space-y-4">-->
 
-<!--            <div id="comment-empty-state" class="py-8 px-4 text-center flex flex-col items-center justify-center animate-in fade-in zoom-in-95 duration-200 border border-dashed border-gray-200 rounded-[1.5rem] relative overflow-hidden bg-gray-50/30">-->
+          <!--            <div id="comment-empty-state" class="py-8 px-4 text-center flex flex-col items-center justify-center animate-in fade-in zoom-in-95 duration-200 border border-dashed border-gray-200 rounded-[1.5rem] relative overflow-hidden bg-gray-50/30">-->
 
-<!--              <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-gray-300 mb-2 border border-gray-100 shadow-inner">-->
-<!--                <i class="fa-regular fa-comments text-base"></i>-->
-<!--              </div>-->
+          <!--              <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-gray-300 mb-2 border border-gray-100 shadow-inner">-->
+          <!--                <i class="fa-regular fa-comments text-base"></i>-->
+          <!--              </div>-->
 
-<!--              <h5 class="text-[11px] font-bold text-gray-400">아직 등록된 댓글이 없습니다</h5>-->
-<!--              <p class="text-[10px] text-gray-400/70 mt-0.5 font-medium tracking-tight">이 일정에 대한 첫 번째 의견을 남겨보세요!</p>-->
+          <!--              <h5 class="text-[11px] font-bold text-gray-400">아직 등록된 댓글이 없습니다</h5>-->
+          <!--              <p class="text-[10px] text-gray-400/70 mt-0.5 font-medium tracking-tight">이 일정에 대한 첫 번째 의견을 남겨보세요!</p>-->
 
-<!--              <div class="absolute -bottom-4 -right-3 text-indigo-100/30 pointer-events-none select-none text-6xl -rotate-12">-->
-<!--                <i class="fa-solid fa-comment-dots"></i>-->
-<!--              </div>-->
-<!--            </div>-->
+          <!--              <div class="absolute -bottom-4 -right-3 text-indigo-100/30 pointer-events-none select-none text-6xl -rotate-12">-->
+          <!--                <i class="fa-solid fa-comment-dots"></i>-->
+          <!--              </div>-->
+          <!--            </div>-->
 
-<!--          </div>-->
+          <!--          </div>-->
 
           <div class="relative group mt-4">
             <input type="text" placeholder="댓글을 입력하세요..."
@@ -350,11 +348,8 @@
 
       </div>
 
-      <div class="p-8 bg-white border-t border-gray-100 shrink-0">
-        <div class="flex items-center gap-3">
-          <button type="button" onclick="openDeleteScheduleModal()" class="flex-1 py-3.5 border border-gray-200 text-rose-500 hover:bg-rose-50 font-bold rounded-xl transition-all text-sm">삭제</button>
-          <button type="button" onclick="handleEditScheduleTrigger()" class="flex-[2] py-3.5 bg-gray-900 text-white font-bold rounded-xl hover:bg-black shadow-lg shadow-gray-200 transition-all text-sm">수정하기</button>
-        </div>
+      <div class="p-8 bg-white border-t border-gray-100 shrink-0 flex items-center gap-3">
+
       </div>
 
     </div>

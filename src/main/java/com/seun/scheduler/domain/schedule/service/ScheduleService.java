@@ -7,10 +7,7 @@ import com.seun.scheduler.domain.group.repository.GroupMemberRepository;
 import com.seun.scheduler.domain.group.repository.GroupRepository;
 import com.seun.scheduler.domain.member.entity.Member;
 import com.seun.scheduler.domain.member.repository.MemberRepository;
-import com.seun.scheduler.domain.schedule.dto.ScheduleCreateRequest;
-import com.seun.scheduler.domain.schedule.dto.ScheduleDetailResponse;
-import com.seun.scheduler.domain.schedule.dto.ScheduleListResponse;
-import com.seun.scheduler.domain.schedule.dto.ScheduleRangeRequest;
+import com.seun.scheduler.domain.schedule.dto.*;
 import com.seun.scheduler.domain.schedule.entity.Schedule;
 import com.seun.scheduler.domain.schedule.repository.ScheduleRepository;
 import com.seun.scheduler.global.common.ResultCode;
@@ -97,6 +94,8 @@ public class ScheduleService {
         Member member = memberRepository.findByMemberId(memberId).orElseThrow(() -> new CustomException(ResultCode.MEMBER_NOT_FOUND));
         Schedule schedule = scheduleRepository.findWithGroupAndMemberById(scheduleId).orElseThrow(() -> new CustomException(ResultCode.SCHEDULE_NOT_FOUND));
 
+        boolean isOwner = true;
+
         if (schedule.getGroup() == null) {
 
             if (!memberId.equals(schedule.getMember().getMemberId())) {
@@ -107,29 +106,53 @@ public class ScheduleService {
 
             groupMemberRepository.findByGroupAndMemberAndStatus(schedule.getGroup(), member,
                     GroupMemberStatus.ACTIVE).orElseThrow(() -> new CustomException(ResultCode.NOT_GROUP_MEMBER));
+
+            if (!memberId.equals(schedule.getMember().getMemberId())) {
+
+                isOwner = false;
+            }
         }
 
-        return ScheduleDetailResponse.from(schedule);
+        return ScheduleDetailResponse.from(schedule, isOwner);
+    }
+
+    @Transactional
+    public void updateSchedule(String memberId, Long scheduleId, ScheduleUpdateRequest request) {
+
+        LocalDateTime startDateTime = Optional.ofNullable(request.getStartDateTime())
+                .map(start -> start.length() <= 10 ?
+                        LocalDate.parse(start).atStartOfDay() : LocalDateTime.parse(start)).orElse(null);
+        LocalDateTime endDateTime = Optional.ofNullable(request.getEndDateTime())
+                .map(end -> end.length() <= 10 ?
+                        LocalDate.parse(end).atTime(23, 59, 59) : LocalDateTime.parse(end))
+                .orElseThrow(() -> new CustomException(ResultCode.SCHEDULE_END_TIME_REQUIRED));
+
+        if (startDateTime != null && endDateTime != null) {
+
+            if (startDateTime.isAfter(endDateTime)) {
+
+                throw new CustomException(ResultCode.INVALID_SCHEDULE_TIME);
+            }
+        }
+
+        Member member = memberRepository.findByMemberId(memberId).orElseThrow(() -> new CustomException(ResultCode.MEMBER_NOT_FOUND));
+        Schedule schedule = scheduleRepository.findWithGroupAndMemberById(scheduleId).orElseThrow(() -> new CustomException(ResultCode.SCHEDULE_NOT_FOUND));
+
+        if (!memberId.equals(schedule.getMember().getMemberId())) {
+
+            throw new CustomException(ResultCode.UNAUTHORIZED_SCHEDULE_MODIFY);
+        }
+
+        if (schedule.getGroup() != null) {
+
+            groupMemberRepository.findByGroupAndMemberAndStatus(schedule.getGroup(), member,
+                    GroupMemberStatus.ACTIVE).orElseThrow(() -> new CustomException(ResultCode.LEFT_GROUP_SCHEDULE_MODIFY));
+        }
+
+        schedule.update(request, startDateTime, endDateTime);
     }
 
     /*
-
-    @Transactional
-    public ScheduleResponse updateSchedule(long scheduleId, String userId, ScheduleRequest request) {
-        Schedule schedule = scheduleRepository.findByIdWithUser(scheduleId).orElseThrow(() -> new IllegalArgumentException("일정을 찾을 수가 없습니다."));
-
-        // 본인이 작성한 일정인지 확인
-        if (!schedule.getMember().getMemberId().equals(userId)) {
-            throw new IllegalArgumentException("본인의 일정만 수정이 가능합니다.");
-        }
-
-        schedule.update(request);
-
-        // 개인 일정 등록일 경우
-        if (schedule.getGroup() == null) return ScheduleResponse.from(schedule, userId);
-        else return ScheduleResponse.from(schedule, userId, schedule.getGroup().getId());
-    }
-
     @Transactional
     public void deleteSchedule(long scheduleId, String userId) {
         Schedule schedule = scheduleRepository.findByIdWithUser(scheduleId).orElseThrow(() -> new IllegalArgumentException("일정을 찾을 수가 없습니다."));

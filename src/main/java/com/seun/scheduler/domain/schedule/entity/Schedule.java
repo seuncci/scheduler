@@ -4,6 +4,7 @@ import com.seun.scheduler.domain.ScheduleComment;
 import com.seun.scheduler.domain.group.entity.Group;
 import com.seun.scheduler.domain.member.entity.Member;
 import com.seun.scheduler.domain.schedule.dto.ScheduleCreateRequest;
+import com.seun.scheduler.domain.schedule.dto.ScheduleUpdateRequest;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -66,6 +67,17 @@ public class Schedule {
 
     @LastModifiedDate
     private LocalDateTime modifiedDate;
+
+    public void update(ScheduleUpdateRequest request, LocalDateTime startDateTime, LocalDateTime endDateTime) {
+
+        this.title = request.getTitle();
+        this.content = request.getContent();
+        this.location = request.getLocation();
+        this.color = request.getColor();
+        this.startDateTime = startDateTime;
+        this.endDateTime = endDateTime;
+        this.isCompleted = request.getIsCompleted();
+    }
 
     public static Schedule of(LocalDateTime startDateTime, LocalDateTime endDateTime, Member member, Group group, ScheduleCreateRequest request) {
 

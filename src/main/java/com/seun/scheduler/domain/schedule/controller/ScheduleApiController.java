@@ -1,9 +1,6 @@
 package com.seun.scheduler.domain.schedule.controller;
 
-import com.seun.scheduler.domain.schedule.dto.ScheduleCreateRequest;
-import com.seun.scheduler.domain.schedule.dto.ScheduleDetailResponse;
-import com.seun.scheduler.domain.schedule.dto.ScheduleListResponse;
-import com.seun.scheduler.domain.schedule.dto.ScheduleRangeRequest;
+import com.seun.scheduler.domain.schedule.dto.*;
 import com.seun.scheduler.global.common.CommonResponse;
 import com.seun.scheduler.global.common.ResultCode;
 import com.seun.scheduler.security.auth.CustomUserDetails;
@@ -40,6 +37,14 @@ public class ScheduleApiController {
     public CommonResponse<ScheduleDetailResponse> getScheduleDetail(@AuthenticationPrincipal CustomUserDetails userDetails, @PathVariable("scheduleId") Long scheduleId) {
 
         return CommonResponse.result(ResultCode.SCHEDULE_DETAIL_SUCCESS, scheduleService.getScheduleDetail(userDetails.getUsername(), scheduleId));
+    }
+
+    @PutMapping("/{scheduleId}")
+    public CommonResponse<Void> updateSchedule(@AuthenticationPrincipal CustomUserDetails userDetails, @PathVariable("scheduleId") Long scheduleId,
+                                               @RequestBody @Valid ScheduleUpdateRequest request) {
+
+        scheduleService.updateSchedule(userDetails.getUsername(), scheduleId, request);
+        return CommonResponse.result(ResultCode.SCHEDULE_UPDATE_SUCCESS);
     }
 
     /*

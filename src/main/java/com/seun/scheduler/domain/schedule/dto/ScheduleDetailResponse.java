@@ -31,8 +31,9 @@ public class ScheduleDetailResponse {
     private LocalDateTime endDateTime;
 
     private Boolean isCompleted;
+    private Boolean isOwner;
 
-    public static ScheduleDetailResponse from(Schedule schedule) {
+    public static ScheduleDetailResponse from(Schedule schedule, Boolean isOwner) {
 
         Long groupId = null;
         String groupName = null;
@@ -63,6 +64,7 @@ public class ScheduleDetailResponse {
                 .startDateTime(schedule.getStartDateTime())
                 .endDateTime(schedule.getEndDateTime())
                 .isCompleted(schedule.getIsCompleted())
+                .isOwner(isOwner)
                 .build();
     }
 }

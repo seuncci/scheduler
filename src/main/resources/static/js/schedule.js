@@ -673,6 +673,9 @@ const view = document.getElementById('calendar-view');
   document.getElementById('event-form').onsubmit = async function(e) {
       e.preventDefault();
 
+      const formMode = this.dataset.mode;
+      const scheduleId = this.dataset.scheduleId;
+
       const formData = new FormData(this);
       const requestData = Object.fromEntries(formData.entries());
 
@@ -691,8 +694,13 @@ const view = document.getElementById('calendar-view');
           return timeValue ? `${dateValue}T${timeValue}` : dateValue;
       };
 
-  requestData.startDateTime = combineDateTime('startDate', 'startTime');
-  requestData.endDateTime = combineDateTime('endDate', 'endTime');
+      requestData.startDateTime = combineDateTime('startDate', 'startTime');
+      requestData.endDateTime = combineDateTime('endDate', 'endTime');
+
+      if (formMode === 'edit') {
+          const completedCheckbox = document.getElementById('form-isCompleted');
+          requestData.isCompleted = completedCheckbox ? completedCheckbox.checked : false;
+      }
 
       if (!requestData.title.trim()) {
           showToast('error', '일정명을 입력해주세요.');
@@ -703,9 +711,17 @@ const view = document.getElementById('calendar-view');
           return;
       }
 
+      let apiUrl = '/api/schedules';
+      let httpMethod = 'POST';
+
+      if (formMode === 'edit' && scheduleId) {
+          apiUrl = `/api/schedules/${scheduleId}`;
+          httpMethod = 'PUT';
+      }
+
       try {
-          const response = await fetch('/api/schedules', {
-              method: 'POST',
+          const response = await fetch(apiUrl, {
+              method: httpMethod,
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(requestData)
           });
@@ -1029,6 +1045,26 @@ function openDetailEventModal(event) {
         if (commentSection) commentSection.classList.add('hidden');
     }
 
+    const actionButtonContainer = modal.querySelector('.p-8.bg-white.border-t.border-gray-100.shrink-0.flex');
+    if (actionButtonContainer) {
+        if (event.isOwner === false) {
+            actionButtonContainer.innerHTML = `
+                <button type="button" onclick="closeDetailEventModal()" class="w-full py-3.5 bg-gray-900 text-white font-bold rounded-xl hover:bg-black shadow-lg shadow-gray-200 transition-all text-sm tracking-tight">
+                    닫기
+                </button>
+            `;
+        } else {
+            actionButtonContainer.innerHTML = `
+                <button type="button" onclick="openDeleteScheduleModal()" class="flex-1 py-3.5 border border-gray-200 text-rose-500 hover:bg-rose-50 font-bold rounded-xl transition-all text-sm tracking-tight bg-white">
+                    삭제
+                </button>
+                <button type="button" onclick='handleEditScheduleTrigger(${JSON.stringify(event)})' class="flex-[2] py-3.5 bg-gray-900 text-white font-bold rounded-xl hover:bg-black shadow-lg shadow-gray-200 transition-all text-sm tracking-tight">
+                    수정하기
+                </button>
+            `;
+        }
+    }
+
     modal.classList.remove('hidden');
     modal.classList.add('flex');
     document.body.style.overflow = 'hidden';
@@ -1149,7 +1185,7 @@ function closeDeleteScheduleModal() {
     }
 }
 
-function handleEditScheduleTrigger() {
+function handleEditScheduleTrigger(event) {
     closeDetailEventModal();
     document.body.style.overflow = 'hidden';
 
@@ -1163,33 +1199,58 @@ function handleEditScheduleTrigger() {
     document.getElementById('modal-target-type-container').classList.add('hidden');
     document.getElementById('group-select-container').classList.add('hidden');
 
+    document.getElementById('form-title').value = event.title || '';
+    document.getElementById('form-content').value = event.content || '';
+    document.getElementById('form-location').value = event.location || '';
+
+    if (event.startDateTime) {
+        const startParts = event.startDateTime.split('T');
+        document.getElementById('startDate').value = startParts[0];
+        if (startParts[1]) {
+            document.getElementById('startTime').value = startParts[1].substring(0, 5);
+        }
+    } else {
+        document.getElementById('startDate').value = '';
+        document.getElementById('startTime').value = '';
+    }
+
+    if (event.endDateTime) {
+        const endParts = event.endDateTime.split('T');
+        document.getElementById('endDate').value = endParts[0];
+        if (endParts[1]) {
+            document.getElementById('endTime').value = endParts[1].substring(0, 5);
+        }
+    }
+
+    const colorRadio = document.querySelector(`input[name="color"][value="${event.color}"]`);
+    if (colorRadio) {
+        colorRadio.checked = true;
+    }
+
+    const completedCheckbox = document.getElementById('form-isCompleted');
+    if (completedCheckbox) {
+        completedCheckbox.checked = event.isCompleted === true;
+    }
+
     const editHeader = document.getElementById('edit-mode-header');
     const editIcon = document.getElementById('edit-mode-icon');
     const editLabel = document.getElementById('edit-mode-label');
     const editValue = document.getElementById('edit-mode-value');
-
-    const isGroupEvent = true;
-    const currentGroupName = "개발팀 내부 프로젝트";
+    const isGroupEvent = event.groupId !== null && event.groupId !== undefined;
 
     if (editHeader) {
-
         editHeader.classList.remove('hidden');
-
         if (isGroupEvent) {
-
             editHeader.classList.remove('bg-gray-50', 'border-gray-100');
             editHeader.classList.add('bg-indigo-50/50', 'border-indigo-100');
-
             editIcon.className = "fa-solid fa-users text-xs text-indigo-500";
             editLabel.className = "text-xs font-bold text-gray-600 shrink-0";
             editLabel.innerText = "소속 그룹 :";
             editValue.className = "text-xs font-black text-indigo-700";
-            editValue.innerText = currentGroupName;
+            editValue.innerText = event.groupName || "소속 그룹 없음";
         } else {
-
             editHeader.classList.remove('bg-indigo-50/50', 'border-indigo-100');
             editHeader.classList.add('bg-gray-50', 'border-gray-100');
-
             editIcon.className = "fa-solid fa-lock text-xs text-gray-400";
             editLabel.className = "text-xs font-bold text-gray-500 shrink-0";
             editLabel.innerText = "일정 종류 :";
@@ -1199,6 +1260,10 @@ function handleEditScheduleTrigger() {
     }
 
     document.getElementById('modal-status-checkbox-container').classList.remove('hidden');
+
+    const form = document.getElementById('event-form');
+    form.dataset.mode = 'edit';
+    form.dataset.scheduleId = event.id;
 
     eventModal.classList.remove('hidden');
     eventModal.classList.add('flex');
