@@ -1,4 +1,5 @@
 let currentYear, currentMonth, currentDay;
+let currentDeleteCommentId = null;
 
 function initCalendar() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -1038,6 +1039,118 @@ function openDetailEventModal(event) {
             if (defaultUserIcon) defaultUserIcon.classList.remove('hidden');
         }
 
+        const commentCountSpan = document.getElementById('detail-comment-count');
+        const commentListDiv = document.getElementById('detail-comment-list');
+        const commentPaginationDiv = document.getElementById('comment-pagination');
+
+        if (event.comments && event.comments.length > 0) {
+            if (commentCountSpan) {
+                commentCountSpan.innerText = event.totalCommentCount || 0;
+            }
+
+            if (commentPaginationDiv) {
+                if ((event.totalCommentCount || 0) <= 5) {
+                    commentPaginationDiv.classList.add('hidden');
+                } else {
+                    commentPaginationDiv.classList.remove('hidden');
+                    renderCommentPagination(0, event.totalCommentCount);
+                }
+            }
+
+            if (commentListDiv) {
+                commentListDiv.innerHTML = event.comments.map(comment => {
+                    const profileSrc = comment.profileImage && comment.profileImage.trim() !== ""
+                        ? '/member/' + comment.profileImage
+                        : '/images/default-profile.png';
+
+                    let dateStr = comment.createdDate;
+                    if (dateStr && typeof dateStr === 'string') {
+                        if (dateStr.includes('.')) {
+                            dateStr = dateStr.split('.')[0];
+                        }
+                        dateStr = dateStr.replace('T', ' ').replace(/-/g, '/');
+                    }
+
+                    const rawDate = new Date(dateStr);
+                    const nowDate = new Date();
+
+                    let timeLabel = '';
+
+                    if (!isNaN(rawDate.getTime())) {
+                        const isToday = rawDate.getFullYear() === nowDate.getFullYear() &&
+                                        rawDate.getMonth() === nowDate.getMonth() &&
+                                        rawDate.getDate() === nowDate.getDate();
+
+                        if (isToday) {
+                            const hours = rawDate.getHours();
+                            const minutes = String(rawDate.getMinutes()).padStart(2, '0');
+                            const ampm = hours < 12 ? '오전' : '오후';
+                            const displayHour = String(hours % 12 || 12).padStart(2, '0');
+                            timeLabel = `${ampm} ${displayHour}:${minutes}`;
+                        } else {
+                            const year = rawDate.getFullYear();
+                            const month = String(rawDate.getMonth() + 1).padStart(2, '0');
+                            const day = String(rawDate.getDate()).padStart(2, '0');
+                            timeLabel = `${year}-${month}-${day}`;
+                        }
+                    } else {
+                        timeLabel = comment.createdAt ? comment.createdAt.substring(0, 10) : '';
+                    }
+
+                    return `
+                        <div id="comment-item-${comment.id}" class="group p-5 bg-gray-50 border border-gray-100 rounded-[1.5rem] flex items-start gap-4 transition-all hover:bg-white hover:shadow-md">
+                            <img src="${profileSrc}" class="w-9 h-9 rounded-full object-cover shrink-0 shadow-sm border border-gray-100">
+                            <div class="flex-1 min-w-0 space-y-1.5">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-[12px] font-bold text-gray-900">${comment.profileName}</span>
+                                        <span class="text-[9px] font-medium text-gray-400 uppercase tracking-tight">${timeLabel}</span>
+                                    </div>
+                                    <div class="opacity-0 group-hover:opacity-100 flex items-center gap-2 transition-all">
+                                        ${comment.isOwner ? `
+                                            <button type="button" onclick="toggleEditCommentForm(${comment.id})" title="댓글 수정" class="text-gray-400 hover:text-indigo-500 transition-colors"><i class="fa-solid fa-pen text-[10px]"></i></button>
+                                            <button type="button" onclick="openDeleteCommentModal(${comment.id})" title="댓글 삭제" class="text-gray-400 hover:text-rose-500 transition-colors"><i class="fa-solid fa-trash-can text-[10px]"></i></button>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                                <p id="comment-text-${comment.id}" class="text-[12px] text-gray-600 font-medium leading-relaxed block">${comment.content}</p>
+                                <div id="comment-edit-box-${comment.id}" class="hidden mt-2 space-y-2">
+                                    <textarea id="comment-edit-input-${comment.id}" rows="2" class="w-full p-3 bg-white border border-gray-200 rounded-xl text-[12px] font-medium leading-relaxed focus:ring-1 focus:ring-black focus:outline-none transition-all resize-none">${comment.content}</textarea>
+                                    <div class="flex justify-end gap-1.5">
+                                        <button type="button" onclick="toggleEditCommentForm(${comment.id})" class="px-3 py-1.5 bg-gray-200 text-gray-600 text-[10px] font-bold rounded-lg hover:bg-gray-300 transition-colors">취소</button>
+                                        <button type="button" onclick="saveCommentEdit(${comment.id})" class="px-3 py-1.5 bg-gray-900 text-white text-[10px] font-bold rounded-lg hover:bg-black transition-colors">저장</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        } else {
+            if (commentCountSpan) commentCountSpan.innerText = "0";
+            if (commentPaginationDiv) {
+                if ((event.totalCommentCount || 0) <= 5) {
+                    commentPaginationDiv.classList.add('hidden');
+                } else {
+                    commentPaginationDiv.classList.remove('hidden');
+                    renderCommentPagination(event.currentPage, event.totalCommentCount);
+                }
+            }
+            if (commentListDiv) {
+                commentListDiv.innerHTML = `
+                    <div id="comment-empty-state" class="py-8 px-4 text-center flex flex-col items-center justify-center animate-in fade-in zoom-in-95 duration-200 border border-dashed border-gray-200 rounded-[1.5rem] relative overflow-hidden bg-gray-50/30">
+                        <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-gray-300 mb-2 border border-gray-100 shadow-inner">
+                            <i class="fa-regular fa-comments text-base"></i>
+                        </div>
+                        <h5 class="text-[11px] font-bold text-gray-400">아직 등록된 댓글이 없습니다</h5>
+                        <p class="text-[10px] text-gray-400/70 mt-0.5 font-medium tracking-tight">이 일정에 대한 첫 번째 의견을 남겨보세요!</p>
+                        <div class="absolute -bottom-4 -right-3 text-indigo-100/30 pointer-events-none select-none text-6xl -rotate-12">
+                            <i class="fa-solid fa-comment-dots"></i>
+                        </div>
+                    </div>
+                `;
+            }
+        }
     } else {
         if (timeRow) timeRow.classList.add('!mt-0');
         if (groupItemRow) groupItemRow.classList.add('hidden');
@@ -1062,6 +1175,17 @@ function openDetailEventModal(event) {
                     수정하기
                 </button>
             `;
+        }
+    }
+
+    modal.dataset.currentScheduleId = event.id;
+
+    const commentWriteContainer = document.getElementById('comment-write-container');
+    if (commentWriteContainer) {
+        if (isGroup) {
+            commentWriteContainer.classList.remove('hidden');
+        } else {
+            commentWriteContainer.classList.add('hidden');
         }
     }
 
@@ -1129,26 +1253,61 @@ function toggleEditCommentForm(commentId) {
     }
 }
 
-function saveCommentEdit(commentId) {
+async function saveCommentEdit(commentId) {
+    const modal = document.getElementById('detail-event-modal');
+    const scheduleId = modal.dataset.currentScheduleId;
     const editInput = document.getElementById(`comment-edit-input-${commentId}`);
-    const updatedContent = editInput.value;
 
-    if (!updatedContent.trim()) {
+    if (!scheduleId || !editInput) return;
+
+    const updatedContent = editInput.value.trim();
+
+    if (!updatedContent) {
         showToast('error', '댓글 내용을 입력해 주세요.');
         return;
     }
 
-    document.getElementById(`comment-text-${commentId}`).innerText = updatedContent;
-    toggleEditCommentForm(commentId);
+    try {
+        const response = await fetch(`/api/schedules/${scheduleId}/comments/${commentId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content: updatedContent })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            showToast('success', result.message);
+
+            const pageNumbersDiv = document.getElementById('comment-page-numbers');
+            let currentPage = 0;
+
+            if (pageNumbersDiv) {
+                const activeBtn = pageNumbersDiv.querySelector('.bg-gray-900');
+                if (activeBtn) {
+                    currentPage = parseInt(activeBtn.innerText) - 1;
+                }
+            }
+
+            setTimeout(async () => {
+                await changeCommentPage(currentPage);
+            }, 1500);
+        } else {
+            showToast('error', result.message);
+        }
+    } catch (error) {
+        console.error('Comment Edit Error:', error);
+        showToast('error', '서버와의 통신에 실패했습니다.');
+    }
 }
 
 function openDeleteCommentModal(commentId) {
+    currentDeleteCommentId = commentId;
+
     const modal = document.getElementById('deleteCommentConfirmModal');
     if (modal) {
         modal.classList.remove('hidden');
-
         modal.style.display = 'flex';
-
         document.body.style.overflow = 'hidden';
     }
 }
@@ -1290,5 +1449,270 @@ function closeAddEventModal() {
         if (groupContainer) {
             groupContainer.classList.add('hidden');
         }
+    }
+}
+
+document.getElementById('btn-comment-submit').onclick = async function() {
+    const modal = document.getElementById('detail-event-modal');
+    const scheduleId = modal.dataset.currentScheduleId;
+    const commentInput = document.getElementById('comment-input');
+
+    if (!commentInput || !scheduleId) return;
+
+    const contentValue = commentInput.value.trim();
+
+    if (!contentValue) {
+        showToast('error', '댓글 내용을 입력해 주세요.');
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/schedules/${scheduleId}/comments`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content: contentValue })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            showToast('success', result.message);
+            commentInput.value = '';
+
+            setTimeout(async () => {
+                const refreshResponse = await fetch(`/api/schedules/${scheduleId}`);
+                if (refreshResponse.ok) {
+                    const refreshResult = await refreshResponse.json();
+                    openDetailEventModal(refreshResult.data);
+                }
+            }, 1500);
+        } else {
+            showToast('error', result.message);
+        }
+    } catch (error) {
+        console.error('Comment Register Error:', error);
+        showToast('error', '서버와의 통신에 실패했습니다.');
+    }
+};
+
+document.getElementById('comment-input').onkeydown = function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        document.getElementById('btn-comment-submit').click();
+    }
+};
+
+function renderCommentPagination(currentPage, totalCommentCount) {
+    const pageNumbersDiv = document.getElementById('comment-page-numbers');
+    const btnPrev = document.getElementById('btn-comment-prev');
+    const btnNext = document.getElementById('btn-comment-next');
+
+    if (!pageNumbersDiv) return;
+
+    const size = 5;
+    const totalPages = Math.ceil(totalCommentCount / size);
+
+    if (btnPrev) {
+        if (currentPage === 0) {
+            btnPrev.classList.add('opacity-30', 'pointer-events-none');
+            btnPrev.onclick = null;
+        } else {
+            btnPrev.classList.remove('opacity-30', 'pointer-events-none');
+            btnPrev.onclick = () => changeCommentPage(currentPage - 1);
+        }
+    }
+
+    if (btnNext) {
+        if (currentPage + 1 === totalPages || totalPages === 0) {
+            btnNext.classList.add('opacity-30', 'pointer-events-none');
+            btnNext.onclick = null;
+        } else {
+            btnNext.classList.remove('opacity-30', 'pointer-events-none');
+            btnNext.onclick = () => changeCommentPage(currentPage + 1);
+        }
+    }
+
+    let html = '';
+    for (let i = 1; i <= totalPages; i++) {
+        if ((i - 1) === currentPage) {
+            html += `<button type="button" class="w-8 h-8 flex items-center justify-center rounded-xl text-[11px] font-extrabold bg-gray-900 text-white shadow-md shadow-gray-200 translate-y-[-1px]">${i}</button>`;
+        } else {
+            html += `<button type="button" onclick="changeCommentPage(${i - 1})" class="w-8 h-8 flex items-center justify-center rounded-xl text-[11px] font-medium text-gray-400 hover:bg-gray-100 hover:text-gray-900 transition-all">${i}</button>`;
+        }
+    }
+
+    pageNumbersDiv.innerHTML = html;
+}
+
+async function changeCommentPage(targetPage) {
+    const modal = document.getElementById('detail-event-modal');
+    const scheduleId = modal.dataset.currentScheduleId;
+
+    if (!scheduleId) return;
+
+    try {
+        const response = await fetch(`/api/schedules/${scheduleId}/comments?page=${targetPage}&size=5`);
+
+        if (response.status === 401 || response.redirected) {
+            handleSessionTimeout();
+            return;
+        }
+
+        if (response.ok) {
+            const result = await response.json();
+
+            const commentCountSpan = document.getElementById('detail-comment-count');
+            if (commentCountSpan) {
+                commentCountSpan.innerText = result.data.totalCommentCount || 0;
+            }
+
+            const commentPaginationDiv = document.getElementById('comment-pagination');
+            if (commentPaginationDiv) {
+                if ((result.data.totalCommentCount || 0) <= 5) {
+                    commentPaginationDiv.classList.add('hidden');
+                } else {
+                    commentPaginationDiv.classList.remove('hidden');
+                    renderCommentPagination(result.data.currentPage, result.data.totalCommentCount);
+                }
+            }
+
+            const commentListDiv = document.getElementById('detail-comment-list');
+            const pageNumbersDiv = document.getElementById('comment-page-numbers');
+
+            if (commentListDiv) {
+                if (!result.data.comments || result.data.comments.length === 0) {
+                    commentListDiv.innerHTML = `
+                        <div id="comment-empty-state" class="py-8 px-4 text-center flex flex-col items-center justify-center animate-in fade-in zoom-in-95 duration-200 border border-dashed border-gray-200 rounded-[1.5rem] relative overflow-hidden bg-gray-50/30">
+                            <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-gray-300 mb-2 border border-gray-100 shadow-inner">
+                                <i class="fa-regular fa-comments text-base"></i>
+                            </div>
+                            <h5 class="text-[11px] font-bold text-gray-400">아직 등록된 댓글이 없습니다</h5>
+                            <p class="text-[10px] text-gray-400/70 mt-0.5 font-medium tracking-tight">이 일정에 대한 첫 번째 의견을 남겨보세요!</p>
+                            <div class="absolute -bottom-4 -right-3 text-indigo-100/30 pointer-events-none select-none text-6xl -rotate-12">
+                                <i class="fa-solid fa-comment-dots"></i>
+                            </div>
+                        </div>
+                    `;
+                    if (pageNumbersDiv) pageNumbersDiv.innerHTML = '';
+                    return;
+                }
+
+                commentListDiv.innerHTML = result.data.comments.map(comment => {
+                    const profileSrc = comment.profileImage && comment.profileImage.trim() !== ""
+                        ? '/member/' + comment.profileImage
+                        : '/images/default-profile.png';
+
+                    let dateStr = comment.createdDate;
+                    if (dateStr && typeof dateStr === 'string') {
+                        if (dateStr.includes('.')) {
+                            dateStr = dateStr.split('.')[0];
+                        }
+                        dateStr = dateStr.replace('T', ' ').replace(/-/g, '/');
+                    }
+
+                    const rawDate = new Date(dateStr);
+                    const nowDate = new Date();
+                    let timeLabel = '';
+
+                    if (!isNaN(rawDate.getTime())) {
+                        const isToday = rawDate.getFullYear() === nowDate.getFullYear() &&
+                                        rawDate.getMonth() === nowDate.getMonth() &&
+                                        rawDate.getDate() === nowDate.getDate();
+
+                        if (isToday) {
+                            const hours = rawDate.getHours();
+                            const minutes = String(rawDate.getMinutes()).padStart(2, '0');
+                            const ampm = hours < 12 ? '오전' : '오후';
+                            const displayHour = String(hours % 12 || 12).padStart(2, '0');
+                            timeLabel = `${ampm} ${displayHour}:${minutes}`;
+                        } else {
+                            const year = rawDate.getFullYear();
+                            const month = String(rawDate.getMonth() + 1).padStart(2, '0');
+                            const day = String(rawDate.getDate()).padStart(2, '0');
+                            timeLabel = `${year}-${month}-${day}`;
+                        }
+                    } else {
+                        timeLabel = comment.createdDate ? comment.createdDate.substring(0, 10) : '';
+                    }
+
+                    return `
+                        <div id="comment-item-${comment.id}" class="group p-5 bg-gray-50 border border-gray-100 rounded-[1.5rem] flex items-start gap-4 transition-all hover:bg-white hover:shadow-md">
+                            <img src="${profileSrc}" class="w-9 h-9 rounded-full object-cover shrink-0 shadow-sm border border-gray-100">
+                            <div class="flex-1 min-w-0 space-y-1.5">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-[12px] font-bold text-gray-900">${comment.profileName}</span>
+                                        <span class="text-[9px] font-medium text-gray-400 uppercase tracking-tight">${timeLabel}</span>
+                                    </div>
+                                    <div class="opacity-0 group-hover:opacity-100 flex items-center gap-2 transition-all">
+                                        ${comment.isOwner ? `
+                                            <button type="button" onclick="toggleEditCommentForm(${comment.id})" title="댓글 수정" class="text-gray-400 hover:text-indigo-500 transition-colors"><i class="fa-solid fa-pen text-[10px]"></i></button>
+                                            <button type="button" onclick="openDeleteCommentModal(${comment.id})" title="댓글 삭제" class="text-gray-400 hover:text-rose-500 transition-colors"><i class="fa-solid fa-trash-can text-[10px]"></i></button>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                                <p id="comment-text-${comment.id}" class="text-[12px] text-gray-600 font-medium leading-relaxed block">${comment.content}</p>
+                                <div id="comment-edit-box-${comment.id}" class="hidden mt-2 space-y-2">
+                                    <textarea id="comment-edit-input-${comment.id}" rows="2" class="w-full p-3 bg-white border border-gray-200 rounded-xl text-[12px] font-medium leading-relaxed focus:ring-1 focus:ring-black focus:outline-none transition-all resize-none">${comment.content}</textarea>
+                                    <div class="flex justify-end gap-1.5">
+                                        <button type="button" onclick="toggleEditCommentForm(${comment.id})" class="px-3 py-1.5 bg-gray-200 text-gray-600 text-[10px] font-bold rounded-lg hover:bg-gray-300 transition-colors">취소</button>
+                                        <button type="button" onclick="saveCommentEdit(${comment.id})" class="px-3 py-1.5 bg-gray-900 text-white text-[10px] font-bold rounded-lg hover:bg-black transition-colors">저장</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+    } catch (error) {
+        console.error('Comment Page Change Error:', error);
+    }
+}
+
+async function executeCommentDelete() {
+    if (!currentDeleteCommentId) return;
+
+    const modal = document.getElementById('detail-event-modal');
+    const scheduleId = modal.dataset.currentScheduleId;
+
+    if (!scheduleId) return;
+
+    try {
+        const response = await fetch(`/api/schedules/${scheduleId}/comments/${currentDeleteCommentId}`, {
+            method: 'DELETE'
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            showToast('success', result.message);
+
+            closeDeleteCommentModal();
+
+            const pageNumbersDiv = document.getElementById('comment-page-numbers');
+            let currentPage = 0;
+
+            if (pageNumbersDiv) {
+                const activeBtn = pageNumbersDiv.querySelector('.bg-gray-900');
+                if (activeBtn) {
+                    currentPage = parseInt(activeBtn.innerText) - 1;
+                }
+            }
+
+            setTimeout(async () => {
+                await changeCommentPage(currentPage);
+            }, 1500);
+
+        } else {
+            showToast('error', result.message);
+            closeDeleteCommentModal();
+        }
+    } catch (error) {
+        console.error('Comment Delete Error:', error);
+        showToast('error', '서버와의 통신에 실패했습니다.');
+        closeDeleteCommentModal();
+    } finally {
+        currentDeleteCommentId = null;
     }
 }

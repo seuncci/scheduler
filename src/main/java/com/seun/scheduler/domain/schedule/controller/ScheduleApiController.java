@@ -7,6 +7,9 @@ import com.seun.scheduler.security.auth.CustomUserDetails;
 import com.seun.scheduler.domain.schedule.service.ScheduleService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -47,24 +50,38 @@ public class ScheduleApiController {
         return CommonResponse.result(ResultCode.SCHEDULE_UPDATE_SUCCESS);
     }
 
-    /*
-    @PatchMapping("/{scheduleId}")
-    public ResponseEntity<CommonResponse<ScheduleResponse>> updateSchedule(
-            @PathVariable("scheduleId") long scheduleId,
-            @AuthenticationPrincipal UserDetailsImpl userDetails,
-            @Valid @RequestBody ScheduleRequest request
-    ) {
-        ScheduleResponse schedule = scheduleService.updateSchedule(scheduleId, userDetails.getUsername(), request);
+    @PostMapping("/{scheduleId}/comments")
+    public CommonResponse<Void> createComment(@AuthenticationPrincipal CustomUserDetails userDetails, @PathVariable("scheduleId") Long scheduleId,
+                                              @RequestBody @Valid ScheduleCommentCreateRequest request) {
 
-        CommonResponse<ScheduleResponse> response = CommonResponse.<ScheduleResponse> builder()
-                .status(HttpStatus.OK.value())
-                .code(HttpStatus.OK.name())
-                .message("수정 성공")
-                .data(schedule)
-                .build();
-
-        return ResponseEntity.ok(response);
+        scheduleService.createComment(userDetails.getUsername(), scheduleId, request);
+        return CommonResponse.result(ResultCode.COMMENT_CREATE_SUCCESS);
     }
+
+    @GetMapping("/{scheduleId}/comments")
+    public CommonResponse<ScheduleCommentPageResponse> getCommentPage(@AuthenticationPrincipal CustomUserDetails userDetails, @PathVariable("scheduleId") Long scheduleId,
+                                                                      @PageableDefault(size = 5, sort = "createdDate", direction = Sort.Direction.DESC) Pageable pageable) {
+        return CommonResponse.result(ResultCode.COMMENT_GET_SUCCESS, scheduleService.getCommentPage(userDetails.getUsername(), scheduleId, pageable));
+    }
+
+    @PutMapping("/{scheduleId}/comments/{commentId}")
+    public CommonResponse<Void> updateComment(@AuthenticationPrincipal CustomUserDetails userDetails, @PathVariable("scheduleId") Long scheduleId,
+                                              @PathVariable("commentId") Long commentId, @RequestBody @Valid ScheduleCommentUpdateRequest request) {
+
+        scheduleService.updateComment(userDetails.getUsername(), scheduleId, commentId, request);
+        return CommonResponse.result(ResultCode.COMMENT_UPDATE_SUCCESS);
+    }
+
+    @DeleteMapping("/{scheduleId}/comments/{commentId}")
+    public CommonResponse<Void> deleteComment(@AuthenticationPrincipal CustomUserDetails userDetails, @PathVariable("scheduleId") Long scheduleId,
+                                              @PathVariable("commentId") Long commentId) {
+
+        scheduleService.deleteComment(userDetails.getUsername(), scheduleId, commentId);
+        return CommonResponse.result(ResultCode.COMMENT_DELETE_SUCCESS);
+    }
+
+    /*
+
 
     @DeleteMapping("/{scheduleId}")
     public ResponseEntity<CommonResponse<Void>> deleteSchedule(

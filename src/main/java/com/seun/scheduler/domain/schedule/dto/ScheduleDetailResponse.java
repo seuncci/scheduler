@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Builder
@@ -33,7 +34,11 @@ public class ScheduleDetailResponse {
     private Boolean isCompleted;
     private Boolean isOwner;
 
-    public static ScheduleDetailResponse from(Schedule schedule, Boolean isOwner) {
+    private List<ScheduleCommentResponse> comments;
+
+    private Long totalCommentCount;
+
+    public static ScheduleDetailResponse from(Schedule schedule, Boolean isOwner, List<ScheduleCommentResponse> comments, Long totalCommentCount) {
 
         Long groupId = null;
         String groupName = null;
@@ -65,6 +70,8 @@ public class ScheduleDetailResponse {
                 .endDateTime(schedule.getEndDateTime())
                 .isCompleted(schedule.getIsCompleted())
                 .isOwner(isOwner)
+                .comments(comments)
+                .totalCommentCount(totalCommentCount)
                 .build();
     }
 }

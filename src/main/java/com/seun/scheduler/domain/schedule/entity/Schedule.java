@@ -1,6 +1,5 @@
 package com.seun.scheduler.domain.schedule.entity;
 
-import com.seun.scheduler.domain.ScheduleComment;
 import com.seun.scheduler.domain.group.entity.Group;
 import com.seun.scheduler.domain.member.entity.Member;
 import com.seun.scheduler.domain.schedule.dto.ScheduleCreateRequest;
@@ -63,7 +62,7 @@ public class Schedule {
 
     @CreatedDate
     @Column(updatable = false)
-    private LocalDateTime createdTime;
+    private LocalDateTime createdDate;
 
     @LastModifiedDate
     private LocalDateTime modifiedDate;

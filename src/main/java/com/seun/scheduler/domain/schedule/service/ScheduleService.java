@@ -9,10 +9,16 @@ import com.seun.scheduler.domain.member.entity.Member;
 import com.seun.scheduler.domain.member.repository.MemberRepository;
 import com.seun.scheduler.domain.schedule.dto.*;
 import com.seun.scheduler.domain.schedule.entity.Schedule;
+import com.seun.scheduler.domain.schedule.entity.ScheduleComment;
+import com.seun.scheduler.domain.schedule.repository.ScheduleCommentRepository;
 import com.seun.scheduler.domain.schedule.repository.ScheduleRepository;
 import com.seun.scheduler.global.common.ResultCode;
 import com.seun.scheduler.global.error.CustomException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +35,7 @@ import java.util.stream.Stream;
 public class ScheduleService {
 
     private final ScheduleRepository scheduleRepository;
+    private final ScheduleCommentRepository scheduleCommentRepository;
     private final MemberRepository memberRepository;
     private final GroupRepository groupRepository;
     private final GroupMemberRepository groupMemberRepository;
@@ -96,6 +103,10 @@ public class ScheduleService {
 
         boolean isOwner = true;
 
+        List<ScheduleCommentResponse> comments = List.of();
+
+        long totalCount = 0L;
+
         if (schedule.getGroup() == null) {
 
             if (!memberId.equals(schedule.getMember().getMemberId())) {
@@ -111,9 +122,15 @@ public class ScheduleService {
 
                 isOwner = false;
             }
+
+            Pageable pageable = PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "createdDate"));
+            Page<ScheduleComment> commentPage = scheduleCommentRepository.findByScheduleIdAndDeletedAtIsNull(scheduleId, pageable);
+
+            comments = commentPage.getContent().stream().map(comment -> ScheduleCommentResponse.of(comment, memberId)).toList();
+            totalCount = commentPage.getTotalElements();
         }
 
-        return ScheduleDetailResponse.from(schedule, isOwner);
+        return ScheduleDetailResponse.from(schedule, isOwner, comments, totalCount);
     }
 
     @Transactional
@@ -152,6 +169,94 @@ public class ScheduleService {
         schedule.update(request, startDateTime, endDateTime);
     }
 
+    @Transactional
+    public void createComment(String memberId, Long scheduleId, ScheduleCommentCreateRequest request) {
+
+        Member member = memberRepository.findByMemberId(memberId).orElseThrow(() -> new CustomException(ResultCode.MEMBER_NOT_FOUND));
+        Schedule schedule = scheduleRepository.findWithGroupAndMemberById(scheduleId).orElseThrow(() -> new CustomException(ResultCode.SCHEDULE_NOT_FOUND));
+
+        if (schedule.getGroup() != null) {
+
+            groupMemberRepository.findByGroupAndMemberAndStatus(schedule.getGroup(), member,
+                    GroupMemberStatus.ACTIVE).orElseThrow(() -> new CustomException(ResultCode.NOT_GROUP_MEMBER));
+        } else {
+
+            throw new CustomException(ResultCode.CANNOT_COMMENT_ON_PERSONAL);
+        }
+
+        scheduleCommentRepository.save(ScheduleComment.builder()
+                .content(request.getContent())
+                .schedule(schedule)
+                .member(member)
+                .deletedAt(null)
+                .build());
+    }
+
+    @Transactional(readOnly = true)
+    public ScheduleCommentPageResponse getCommentPage(String memberId, Long scheduleId, Pageable pageable) {
+
+        Member member = memberRepository.findByMemberId(memberId).orElseThrow(() -> new CustomException(ResultCode.MEMBER_NOT_FOUND));
+        Schedule schedule = scheduleRepository.findWithGroupAndMemberById(scheduleId).orElseThrow(() -> new CustomException(ResultCode.SCHEDULE_NOT_FOUND));
+
+        if (schedule.getGroup() != null) {
+
+            groupMemberRepository.findByGroupAndMemberAndStatus(schedule.getGroup(), member,
+                    GroupMemberStatus.ACTIVE).orElseThrow(() -> new CustomException(ResultCode.NOT_GROUP_MEMBER));
+        } else {
+
+            throw new CustomException(ResultCode.CANNOT_COMMENT_ON_PERSONAL);
+        }
+
+        Page<ScheduleComment> commentPage = scheduleCommentRepository.findByScheduleIdAndDeletedAtIsNull(scheduleId, pageable);
+
+        return ScheduleCommentPageResponse.of(commentPage, memberId);
+    }
+
+    @Transactional
+    public void updateComment(String memberId, Long scheduleId, Long commentId, ScheduleCommentUpdateRequest request) {
+
+        Member member = memberRepository.findByMemberId(memberId).orElseThrow(() -> new CustomException(ResultCode.MEMBER_NOT_FOUND));
+        Schedule schedule = scheduleRepository.findWithGroupAndMemberById(scheduleId).orElseThrow(() -> new CustomException(ResultCode.SCHEDULE_NOT_FOUND));
+        ScheduleComment comment = scheduleCommentRepository.
+                findByIdAndScheduleIdAndMemberMemberId(commentId, scheduleId, memberId).orElseThrow(() -> new CustomException(ResultCode.COMMENT_NOT_FOUND_OR_DENIED));
+
+        if (schedule.getGroup() != null) {
+
+            groupMemberRepository.findByGroupAndMemberAndStatus(schedule.getGroup(), member,
+                    GroupMemberStatus.ACTIVE).orElseThrow(() -> new CustomException(ResultCode.NOT_GROUP_MEMBER));
+        } else {
+
+            throw new CustomException(ResultCode.CANNOT_COMMENT_ON_PERSONAL);
+        }
+
+        comment.updateContent(request.getContent());
+    }
+
+    @Transactional
+    public void deleteComment(String memberId, Long scheduleId, Long commentId) {
+
+        Member member = memberRepository.findByMemberId(memberId).orElseThrow(() -> new CustomException(ResultCode.MEMBER_NOT_FOUND));
+        Schedule schedule = scheduleRepository.findWithGroupAndMemberById(scheduleId).orElseThrow(() -> new CustomException(ResultCode.SCHEDULE_NOT_FOUND));
+        ScheduleComment comment = scheduleCommentRepository.
+                findByIdAndScheduleIdAndMemberMemberId(commentId, scheduleId, memberId).orElseThrow(() -> new CustomException(ResultCode.COMMENT_NOT_FOUND_OR_DENIED));
+
+        if (schedule.getGroup() != null) {
+
+            groupMemberRepository.findByGroupAndMemberAndStatus(schedule.getGroup(), member,
+                    GroupMemberStatus.ACTIVE).orElseThrow(() -> new CustomException(ResultCode.NOT_GROUP_MEMBER));
+        } else {
+
+            throw new CustomException(ResultCode.CANNOT_COMMENT_ON_PERSONAL);
+        }
+
+        if (comment.isDeleted()) {
+
+            throw new CustomException(ResultCode.COMMENT_ALREADY_DELETED);
+        }
+
+        comment.delete();
+    }
+
     /*
     @Transactional
     public void deleteSchedule(long scheduleId, String userId) {
@@ -163,81 +268,6 @@ public class ScheduleService {
         }
 
         scheduleRepository.delete(schedule);
-    }
-
-    @Transactional
-    public ScheduleCommentResponse createComment(long scheduleId, String userId, ScheduleCommentRequest request) {
-        Member member = memberRepository.findByMemberId(userId).orElseThrow(
-                () -> new IllegalArgumentException("유저를 찾을 수 없습니다.")
-        );
-
-        Schedule schedule = scheduleRepository.findByIdWithUser(scheduleId).orElseThrow(() -> new IllegalArgumentException("일정을 찾을 수가 없습니다."));
-
-        // 그룹 일정만 댓글 등록이 가능하기 때문에 그룹 일정인지 체크
-        if (schedule.getGroup() != null) {
-            // 해당 유저가 그룹원의 멤버인지 확인
-            if (!groupMemberRepository.existsByGroup_IdAndMember_MemberId(schedule.getGroup().getId(), userId)) {
-                throw new IllegalArgumentException("해당 그룹의 멤버만 일정을 등록할 수 있습니다.");
-            }
-        }
-
-        ScheduleComment comment = ScheduleComment.builder()
-                .schedule(schedule)
-                .member(member)
-                .content(request.getContent())
-                .build();
-
-        scheduleCommentRepository.save(comment);
-
-        return ScheduleCommentResponse.from(comment, schedule.getId(), userId);
-    }
-
-    @Transactional
-    public ScheduleCommentResponse updateComment(long commentId, String userId, ScheduleCommentRequest request) {
-        // 댓글이 등록 되어 있는 지 확인
-        ScheduleComment comment = scheduleCommentRepository.findById(commentId).orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수가 없습니다."));
-
-        // 일정이 등록 되어 있는 지 확인
-        if (!scheduleRepository.existsById(comment.getSchedule().getId())) {
-            throw new IllegalArgumentException("일정을 찾을 수가 없습니다.");
-        }
-
-        Schedule schedule = scheduleRepository.findByIdWithUser(comment.getSchedule().getId()).orElseThrow(() -> new IllegalArgumentException("일정을 찾을 수가 없습니다."));
-
-        comment.update(request.getContent());
-
-        return ScheduleCommentResponse.from(comment, schedule.getId(), userId);
-    }
-
-    @Transactional
-    public void deleteComment(long commentId, String userId) {
-        // 댓글이 등록 되어 있는 지 확인
-        ScheduleComment comment = scheduleCommentRepository.findByIdWithMember(commentId).orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수가 없습니다."));
-
-        // 본인이 작성한 댓글인지 확인
-        if (!comment.getMember().getMemberId().equals(userId)) {
-            throw new IllegalArgumentException("본인의 댓글만 삭제가 가능합니다.");
-        }
-
-        scheduleCommentRepository.delete(comment);
-    }
-
-    @Transactional(readOnly = true)
-    public ScheduleDetailResponse getScheduleDetail(long scheduleId, String userId) {
-        Schedule schedule = scheduleRepository.findByIdWithAll(scheduleId).orElseThrow(() -> new IllegalArgumentException("일정을 찾을 수가 없습니다."));
-
-        // 그룹 채팅인 경우 그룹원이 확인 가능하고 개인 일정이면 작성자가 확인 가능한지 확인
-        if (schedule.getGroup() == null) {
-            if (!schedule.getMember().getMemberId().equals(userId)) {
-                throw new IllegalArgumentException("본인의 개인 일정만 조회할 수 있습니다.");
-            }
-        } else {
-            if (!groupMemberRepository.existsByGroup_IdAndMember_MemberId(schedule.getGroup().getId(), userId)) {
-                throw new IllegalArgumentException("해당 그룹의 멤버만 일정을 조회할 수 있습니다.");
-            }
-        }
-
-        return ScheduleDetailResponse.of(schedule);
     }
 
     */
