@@ -60,12 +60,22 @@ public class Schedule {
     @OneToMany(mappedBy = "schedule", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ScheduleComment> comments = new ArrayList<>();
 
+    private LocalDateTime deletedDate;
+
     @CreatedDate
     @Column(updatable = false)
     private LocalDateTime createdDate;
 
     @LastModifiedDate
     private LocalDateTime modifiedDate;
+
+    public void delete() {
+        this.deletedDate = LocalDateTime.now();
+    }
+
+    public Boolean isDeleted() {
+        return this.deletedDate != null;
+    }
 
     public void update(ScheduleUpdateRequest request, LocalDateTime startDateTime, LocalDateTime endDateTime) {
 

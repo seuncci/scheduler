@@ -36,7 +36,7 @@ public class ScheduleComment {
     @JoinColumn(name = "member_id")
     private Member member;
 
-    private LocalDateTime deletedAt;
+    private LocalDateTime deletedDate;
 
     @CreatedDate
     @Column(updatable = false)
@@ -50,10 +50,10 @@ public class ScheduleComment {
     }
 
     public void delete() {
-        this.deletedAt = LocalDateTime.now();
+        this.deletedDate = LocalDateTime.now();
     }
 
     public Boolean isDeleted() {
-        return this.deletedAt != null;
+        return this.deletedDate != null;
     }
 }

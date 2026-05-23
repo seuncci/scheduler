@@ -124,7 +124,7 @@ public class ScheduleService {
             }
 
             Pageable pageable = PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "createdDate"));
-            Page<ScheduleComment> commentPage = scheduleCommentRepository.findByScheduleIdAndDeletedAtIsNull(scheduleId, pageable);
+            Page<ScheduleComment> commentPage = scheduleCommentRepository.findByScheduleIdAndDeletedDateIsNull(scheduleId, pageable);
 
             comments = commentPage.getContent().stream().map(comment -> ScheduleCommentResponse.of(comment, memberId)).toList();
             totalCount = commentPage.getTotalElements();
@@ -188,7 +188,7 @@ public class ScheduleService {
                 .content(request.getContent())
                 .schedule(schedule)
                 .member(member)
-                .deletedAt(null)
+                .deletedDate(null)
                 .build());
     }
 
@@ -207,7 +207,7 @@ public class ScheduleService {
             throw new CustomException(ResultCode.CANNOT_COMMENT_ON_PERSONAL);
         }
 
-        Page<ScheduleComment> commentPage = scheduleCommentRepository.findByScheduleIdAndDeletedAtIsNull(scheduleId, pageable);
+        Page<ScheduleComment> commentPage = scheduleCommentRepository.findByScheduleIdAndDeletedDateIsNull(scheduleId, pageable);
 
         return ScheduleCommentPageResponse.of(commentPage, memberId);
     }
@@ -257,18 +257,29 @@ public class ScheduleService {
         comment.delete();
     }
 
-    /*
     @Transactional
-    public void deleteSchedule(long scheduleId, String userId) {
-        Schedule schedule = scheduleRepository.findByIdWithUser(scheduleId).orElseThrow(() -> new IllegalArgumentException("일정을 찾을 수가 없습니다."));
+    public void deleteSchedule(String memberId, Long scheduleId) {
 
-        // 본인이 작성한 일정인지 확인
-        if (!schedule.getMember().getMemberId().equals(userId)) {
-            throw new IllegalArgumentException("본인의 일정만 삭제가 가능합니다.");
+        Member member = memberRepository.findByMemberId(memberId).orElseThrow(() -> new CustomException(ResultCode.MEMBER_NOT_FOUND));
+        Schedule schedule = scheduleRepository.findWithGroupAndMemberById(scheduleId).orElseThrow(() -> new CustomException(ResultCode.SCHEDULE_NOT_FOUND));
+
+        if (schedule.getGroup() != null) {
+
+            groupMemberRepository.findByGroupAndMemberAndStatus(schedule.getGroup(), member,
+                    GroupMemberStatus.ACTIVE).orElseThrow(() -> new CustomException(ResultCode.NOT_GROUP_MEMBER));
         }
 
-        scheduleRepository.delete(schedule);
-    }
+        if (!memberId.equals(schedule.getMember().getMemberId())) {
 
-    */
+            throw new CustomException(ResultCode.ACCESS_DENIED_SCHEDULE);
+        }
+
+        if (schedule.isDeleted()) {
+
+            throw new CustomException(ResultCode.SCHEDULE_ALREADY_DELETED);
+        }
+
+        schedule.delete();
+        scheduleCommentRepository.softDeleteAllByScheduleId(scheduleId, LocalDateTime.now());
+    }
 }

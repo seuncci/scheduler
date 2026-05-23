@@ -1716,3 +1716,41 @@ async function executeCommentDelete() {
         currentDeleteCommentId = null;
     }
 }
+
+async function executeScheduleDelete() {
+    const modal = document.getElementById('detail-event-modal');
+    if (!modal) return;
+
+    const scheduleId = modal.dataset.currentScheduleId;
+    if (!scheduleId) {
+        showToast('error', '삭제할 일정 정보가 올바르지 않습니다.');
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/schedules/${scheduleId}`, {
+            method: 'DELETE'
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            showToast('success', result.message);
+
+            closeDeleteScheduleModal();
+            closeDetailEventModal();
+
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+
+        } else {
+            showToast('error', result.message);
+            closeDeleteScheduleModal();
+        }
+    } catch (error) {
+        console.error('Schedule Delete Error:', error);
+        showToast('error', '서버와의 통신에 실패했습니다.');
+        closeDeleteScheduleModal();
+    }
+}
