@@ -1737,8 +1737,8 @@ async function executeScheduleDelete() {
         if (response.ok) {
             showToast('success', result.message);
 
-            closeDeleteScheduleModal();
-            closeDetailEventModal();
+            // closeDeleteScheduleModal();
+            // closeDetailEventModal();
 
             setTimeout(() => {
                 location.reload();
@@ -1746,7 +1746,7 @@ async function executeScheduleDelete() {
 
         } else {
             showToast('error', result.message);
-            closeDeleteScheduleModal();
+            // closeDeleteScheduleModal();
         }
     } catch (error) {
         console.error('Schedule Delete Error:', error);
@@ -1754,3 +1754,331 @@ async function executeScheduleDelete() {
         closeDeleteScheduleModal();
     }
 }
+
+async function fetchTodayScheduleCount() {
+    const countBtn = document.getElementById('today-schedule-count-btn');
+    if (!countBtn) return;
+
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(now.getDate()).padStart(2, '0');
+    const todayStr = `${y}-${m}-${d}`;
+
+    try {
+        const response = await fetch(`/api/schedules?startDate=${todayStr}&endDate=${todayStr}`);
+
+        if (response.ok) {
+            const result = await response.json();
+            const count = (result.data && result.data.length) ? result.data.length : 0;
+
+            countBtn.innerText = `${count}건`;
+        }
+    } catch (e) {
+        console.error("오늘 일정 건수 로드 실패:", e);
+    }
+}
+
+async function executeScheduleDelete() {
+    const modal = document.getElementById('detail-event-modal');
+    if (!modal) return;
+
+    const scheduleId = modal.dataset.currentScheduleId;
+    if (!scheduleId) {
+        showToast('error', '삭제할 일정 정보가 올바르지 않습니다.');
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/schedules/${scheduleId}`, {
+            method: 'DELETE'
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            showToast('success', result.message);
+
+            // closeDeleteScheduleModal();
+            // closeDetailEventModal();
+
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+
+        } else {
+            showToast('error', result.message);
+            // closeDeleteScheduleModal();
+        }
+    } catch (error) {
+        console.error('Schedule Delete Error:', error);
+        showToast('error', '서버와의 통신에 실패했습니다.');
+        closeDeleteScheduleModal();
+    }
+}
+
+async function fetchTodayScheduleCount() {
+    const countBtn = document.getElementById('today-schedule-count-btn');
+    if (!countBtn) return;
+
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(now.getDate()).padStart(2, '0');
+    const todayStr = `${y}-${m}-${d}`;
+
+    try {
+        const response = await fetch(`/api/schedules?startDate=${todayStr}&endDate=${todayStr}`);
+
+        if (response.ok) {
+            const result = await response.json();
+            const count = (result.data && result.data.length) ? result.data.length : 0;
+
+            countBtn.innerText = `${count}건`;
+        }
+    } catch (e) {
+        console.error("오늘 일정 건수 로드 실패:", e);
+    }
+}
+
+let currentTargetMemoId = null;
+
+async function fetchMyMemos() {
+    const listContainer = document.getElementById('side-memo-list');
+    if (!listContainer) return;
+
+    try {
+        const response = await fetch('/api/memos');
+
+        if (response.status === 401 || response.redirected) {
+            handleSessionTimeout();
+            return;
+        }
+
+        if (response.ok) {
+            const result = await response.json();
+
+            if (!result.data || result.data.length === 0) {
+                listContainer.innerHTML = `
+                    <div class="py-8 px-4 text-center border border-dashed border-gray-200 rounded-2xl bg-gray-50/50">
+                        <p class="text-[11px] font-bold text-gray-400">등록된 메모가 없습니다.</p>
+                        <p class="text-[9px] text-gray-400/70 mt-0.5">새로운 아이디어를 기록해보세요!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            listContainer.innerHTML = result.data.map(memo => {
+                return `
+                    <div id="memo-card-${memo.id}" class="group p-4 bg-indigo-50/50 border border-indigo-100 rounded-2xl cursor-pointer hover:shadow-md transition-all relative">
+                        <div id="memo-view-box-${memo.id}">
+                            <p id="memo-title-text-${memo.id}" class="text-xs font-bold text-indigo-800 pr-12">${memo.content}</p>
+                            <p id="memo-category-text-${memo.id}" class="text-[10px] text-indigo-600/70 mt-1 font-medium">${memo.category}</p>
+
+                            <div class="opacity-0 group-hover:opacity-100 flex items-center gap-1.5 transition-all absolute right-4 top-4">
+                                <button onclick="toggleMemoEditForm(${memo.id}, true); event.stopPropagation();" class="text-indigo-600 hover:text-indigo-800"><i class="fa-solid fa-pen text-[9px]"></i></button>
+                                <button onclick="openDeleteMemoModal(${memo.id}); event.stopPropagation();" class="text-indigo-600 hover:text-rose-600"><i class="fa-solid fa-trash-can text-[9px]"></i></button>
+                            </div>
+                        </div>
+
+                        <div id="memo-edit-box-${memo.id}" class="hidden space-y-2.5">
+                            <div>
+                                <label class="block text-[9px] font-bold text-indigo-500 mb-0.5 ml-0.5">내용</label>
+                                <input type="text" id="memo-edit-input-${memo.id}" value="${memo.content}" class="w-full bg-white px-2.5 py-1.5 border border-indigo-200 rounded-xl text-xs font-bold text-indigo-800 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-[9px] font-bold text-indigo-500 mb-0.5 ml-0.5">카테고리</label>
+                                <input type="text" id="memo-edit-category-${memo.id}" value="${memo.category}" class="w-full bg-white px-2.5 py-1.5 border border-indigo-200 rounded-xl text-[11px] font-bold text-indigo-800 outline-none">
+                            </div>
+                            <div class="flex justify-end gap-1 pt-1 border-t border-indigo-100/50">
+                                <button onclick="toggleMemoEditForm(${memo.id}, false); event.stopPropagation();" class="px-2 py-1 bg-gray-100 text-gray-500 text-[9px] font-bold rounded-md">취소</button>
+                                <button onclick="executeMemoUpdate(${memo.id}); event.stopPropagation();" class="px-2 py-1 bg-indigo-600 text-white text-[9px] font-black rounded-md">변경</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+    } catch (e) {
+        console.error("메모 목록 로드 실패:", e);
+    }
+}
+
+async function executeMemoCreate() {
+    const contentInput = document.getElementById('new-memo-title');
+    const categoryInput = document.getElementById('new-memo-category');
+
+    if (!contentInput || !categoryInput) return;
+
+    const contentValue = contentInput.value.trim();
+    const categoryValue = categoryInput.value.trim();
+
+    if (!contentValue) {
+        showToast('error', '메모 내용을 입력해주세요.');
+        return;
+    }
+    if (!categoryValue) {
+        showToast('error', '카테고리를 입력해주세요.');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/memos', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                content: contentValue,
+                category: categoryValue
+            })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            showToast('success', result.message);
+            // toggleMemoWriteForm(false);
+
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+        } else {
+            showToast('error', result.message);
+        }
+    } catch (error) {
+        console.error('Memo Create Error:', error);
+        showToast('error', '서버와의 통신에 실패했습니다.');
+    }
+}
+
+function toggleMemoWriteForm(isOpen) {
+    const container = document.getElementById('memo-write-container');
+    if (!container) return;
+    if (isOpen) {
+        container.classList.remove('hidden');
+        document.getElementById('new-memo-title').focus();
+    } else {
+        container.classList.add('hidden');
+        document.getElementById('new-memo-category').value = '';
+        document.getElementById('new-memo-title').value = '';
+    }
+}
+
+function toggleMemoEditForm(memoId, isEditMode) {
+    const viewBox = document.getElementById(`memo-view-box-${memoId}`);
+    const editBox = document.getElementById(`memo-edit-box-${memoId}`);
+    if (!viewBox || !editBox) return;
+
+    if (isEditMode) {
+        viewBox.classList.add('hidden');
+        editBox.classList.remove('hidden');
+        document.getElementById(`memo-edit-input-${memoId}`).focus();
+    } else {
+        viewBox.classList.remove('hidden');
+        editBox.classList.add('hidden');
+    }
+}
+
+async function executeMemoUpdate(memoId) {
+    const updatedCategoryInput = document.getElementById(`memo-edit-category-${memoId}`);
+    const updatedTitleInput = document.getElementById(`memo-edit-input-${memoId}`);
+
+    if (!updatedCategoryInput || !updatedTitleInput) return;
+
+    const updatedCategory = updatedCategoryInput.value.trim();
+    const updatedTitle = updatedTitleInput.value.trim();
+
+    if (!updatedTitle) {
+        showToast('error', '수정할 메모 내용을 입력해주세요.');
+        return;
+    }
+    if (!updatedCategory) {
+        showToast('error', '수정할 카테고리를 입력해주세요.');
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/memos/${memoId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                content: updatedTitle,
+                category: updatedCategory
+            })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            showToast('success', result.message);
+            // toggleMemoEditForm(memoId, false);
+
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+        } else {
+            showToast('error', result.message);
+        }
+    } catch (error) {
+        console.error('Memo Update Error:', error);
+        showToast('error', '서버와의 통신에 실패했습니다.');
+    }
+}
+
+function openDeleteMemoModal(memoId) {
+    currentTargetMemoId = memoId;
+    const modal = document.getElementById('deleteMemoConfirmModal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+}
+
+function closeDeleteMemoModal() {
+    currentTargetMemoId = null;
+    const modal = document.getElementById('deleteMemoConfirmModal');
+    if (modal) {
+        modal.classList.replace('flex', 'hidden');
+    }
+}
+
+async function executeMemoDelete() {
+    if (!currentTargetMemoId) return;
+
+    try {
+        const response = await fetch(`/api/memos/${currentTargetMemoId}`, {
+            method: 'DELETE'
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            showToast('success', result.message);
+            closeDeleteMemoModal();
+
+            const card = document.getElementById(`memo-card-${currentTargetMemoId}`);
+            if (card) card.remove();
+
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+        } else {
+            showToast('error', result.message);
+            closeDeleteMemoModal();
+        }
+    } catch (error) {
+        console.error('Memo Delete Error:', error);
+        showToast('error', '서버와의 통신에 실패했습니다.');
+        closeDeleteMemoModal();
+    }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const confirmDeleteMemoBtn = document.getElementById('confirmDeleteMemoBtn');
+    if (confirmDeleteMemoBtn) {
+        confirmDeleteMemoBtn.onclick = executeMemoDelete;
+    }
+
+    fetchMyMemos();
+});
+
+window.addEventListener('DOMContentLoaded', fetchTodayScheduleCount);
