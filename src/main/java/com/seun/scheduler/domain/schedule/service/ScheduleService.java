@@ -24,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -89,11 +90,13 @@ public class ScheduleService {
         List<Schedule> privates = scheduleRepository.findPrivateSchedules(memberId, startDateTime, endDateTime);
         List<Schedule> groups = scheduleRepository.findGroupSchedules(memberId, startDateTime, endDateTime);
 
-        return Stream.concat(privates.stream(), groups.stream())
-                .distinct()
-                .map(ScheduleListResponse::from)
-                .sorted(Comparator.comparing(ScheduleListResponse::getStartDateTime, Comparator.nullsLast(Comparator.naturalOrder())))
-                .collect(Collectors.toList());
+        List<Schedule> combinedSchedules = new ArrayList<>();
+        combinedSchedules.addAll(privates);
+        combinedSchedules.addAll(groups);
+
+        return combinedSchedules.stream()
+                .sorted(Comparator.comparing(Schedule::getCreatedDate).reversed())
+                .map(ScheduleListResponse::from).toList();
     }
 
     public ScheduleDetailResponse getScheduleDetail(String memberId, Long scheduleId) {

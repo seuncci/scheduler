@@ -23,6 +23,8 @@ public class ScheduleListResponse {
     private LocalDateTime startDateTime;
     private LocalDateTime endDateTime;
 
+    private Boolean isCompleted;
+
     public static ScheduleListResponse from(Schedule schedule) {
 
         Long groupId = (schedule.getGroup() != null) ? schedule.getGroup().getId() : null;
@@ -35,6 +37,7 @@ public class ScheduleListResponse {
                 .color(schedule.getColor())
                 .startDateTime(schedule.getStartDateTime())
                 .endDateTime(schedule.getEndDateTime())
+                .isCompleted(schedule.getIsCompleted())
                 .build();
     }
 }

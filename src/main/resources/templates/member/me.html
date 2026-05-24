@@ -10,36 +10,54 @@
 
             <th:block th:replace="~{fragments/profile-sidebar :: menu('info')}"></th:block>
 
-
             <div class="flex-1 flex flex-col gap-6">
 
                 <th:block th:replace="~{fragments/profile-sidebar :: summary('info')}"></th:block>
                 <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-                    <div class="md:col-span-2 bg-white p-8 rounded-2xl shadow-sm border border-gray-200">
-                        <div class="flex justify-between items-center mb-6">
-                            <h3 class="text-xl font-bold text-gray-800">오늘의 일정</h3>
-                            <a href="#" class="text-sm text-blue-500 hover:underline">전체보기</a>
-                        </div>
+                    <div class="md:col-span-2 bg-white p-8 rounded-2xl shadow-sm border border-gray-200 flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-center mb-6">
+                                <h3 class="text-xl font-bold text-gray-800">오늘의 일정</h3>
+                                <a th:href="@{/}" class="text-sm text-blue-500 hover:underline">전체보기</a>
+                            </div>
 
-                        <ul class="space-y-4">
-                            <li class="flex items-center gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
-                                <span class="w-2 h-10 bg-gray-600 rounded-full"></span>
-                                <div class="flex-1">
-                                    <h4 class="font-bold text-gray-800 text-sm">팀 주간 회의</h4>
-                                    <p class="text-xs text-gray-400">오후 2:00 - 3:30</p>
+                            <div th:if="${#lists.isEmpty(todaySchedules)}" class="py-16 text-center">
+                                <div class="mb-3 text-gray-200">
+                                    <i class="fa-solid fa-calendar-xmark text-4xl"></i>
                                 </div>
-                                <input type="checkbox" class="w-5 h-5 rounded border-gray-300">
-                            </li>
-                            <li class="flex items-center gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
-                                <span class="w-2 h-10 bg-blue-400 rounded-full"></span>
-                                <div class="flex-1">
-                                    <h4 class="font-bold text-gray-800 text-sm">프로젝트 기획서 마감</h4>
-                                    <p class="text-xs text-gray-400">오후 6:00까지</p>
-                                </div>
-                                <input type="checkbox" class="w-5 h-5 rounded border-gray-300">
-                            </li>
-                        </ul>
+                                <p class="text-gray-400 text-[13px] tracking-tight">오늘 예정된 일정이 없습니다.</p>
+                            </div>
+
+                            <ul th:if="${!#lists.isEmpty(todaySchedules)}" class="space-y-4">
+                                <li th:each="schedule : ${todaySchedules}" class="flex items-center gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100 group">
+
+                                    <span class="w-2 h-10 rounded-full shrink-0" th:classappend="${schedule.color != null ? schedule.color : 'bg-indigo-500'}"></span>
+
+                                    <div class="flex-1 min-w-0 flex flex-col items-start justify-center">
+
+                                        <h4 class="font-bold text-gray-800 text-sm truncate m-0 flex items-center gap-1">
+                                            <span th:text="${schedule.groupId != null ? '👥' : '🔒'}" class="text-base font-normal leading-none select-none shrink-0"></span>
+                                            <span th:text="${schedule.title}" class="truncate leading-tight"></span>
+                                        </h4>
+
+                                        <p class="text-xs text-gray-400 mt-1 leading-none m-0"
+                                           th:text="${schedule.startDateTime == null ? #temporals.format(schedule.endDateTime, 'a h:mm') + ' 마감' : (#strings.substring(schedule.startDateTime, 0, 10) != #strings.substring(schedule.endDateTime, 0, 10) ? #strings.substring(schedule.startDateTime, 5, 10).replace('-', '/') + ' ~ ' + #strings.substring(schedule.endDateTime, 5, 10).replace('-', '/') : #temporals.format(schedule.startDateTime, 'a h:mm') + ' - ' + #temporals.format(schedule.endDateTime, 'h:mm'))}"></p>
+                                    </div>
+
+                                    <div class="flex items-center gap-1.5 shrink-0 select-none">
+                                        <th:block th:if="${schedule.isCompleted}">
+                                            <i class="fa-solid fa-square-check text-[11px] text-indigo-500 w-4 text-center"></i>
+                                            <span class="text-xs font-bold text-indigo-600 tracking-tight">완료</span>
+                                        </th:block>
+                                        <th:block th:if="${!schedule.isCompleted}">
+                                            <i class="fa-regular fa-square text-[11px] text-gray-300 w-4 text-center"></i>
+                                            <span class="text-xs font-medium text-gray-950 tracking-tight">진행 중</span>
+                                        </th:block>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
 
                     <div class="space-y-6">
@@ -54,20 +72,18 @@
                         <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
                             <h3 class="text-gray-500 text-xs font-bold uppercase mb-4 tracking-widest">이번 주 달성률</h3>
                             <div class="flex items-center justify-between mb-2">
-                                <span class="text-3xl font-black text-gray-800">75%</span>
+                                <span class="text-3xl font-black text-gray-800" th:text="|${achievementRate}%|"></span>
                                 <i class="fa-solid fa-chart-line text-gray-200 text-3xl"></i>
                             </div>
                             <div class="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
-                                <div class="bg-gray-600 h-full w-[75%]"></div>
+                                <div class="bg-gray-600 h-full transition-all duration-500" th:style="|width: ${achievementRate}%|"></div>
                             </div>
                         </div>
                     </div>
                 </section>
 
-
             </div>
         </div>
     </div>
 </main>
-
 </html>

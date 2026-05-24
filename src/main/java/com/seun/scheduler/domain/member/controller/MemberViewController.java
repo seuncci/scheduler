@@ -1,5 +1,8 @@
 package com.seun.scheduler.domain.member.controller;
 
+import com.seun.scheduler.domain.schedule.dto.ScheduleListResponse;
+import com.seun.scheduler.domain.schedule.dto.ScheduleRangeRequest;
+import com.seun.scheduler.domain.schedule.service.ScheduleService;
 import com.seun.scheduler.security.auth.CustomUserDetails;
 import com.seun.scheduler.domain.group.service.GroupService;
 import lombok.RequiredArgsConstructor;
@@ -13,12 +16,18 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
+import java.util.List;
+
 @Controller
 @RequestMapping("/members")
 @RequiredArgsConstructor
 public class MemberViewController {
 
     private final GroupService groupService;
+    private final ScheduleService scheduleService;
 
     @GetMapping("/login")
     public String loginPage() {
@@ -33,7 +42,23 @@ public class MemberViewController {
     @GetMapping("/me")
     public String profilePage(@AuthenticationPrincipal CustomUserDetails userDetails, Model model) {
 
+        LocalDate startOfWeek = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY));
+        LocalDate endOfWeek = LocalDate.now().with(TemporalAdjusters.nextOrSame(DayOfWeek.SATURDAY));
+
+        List<ScheduleListResponse> weekSchedules = scheduleService.getSchedulesByRange(userDetails.getUsername(), new ScheduleRangeRequest(startOfWeek, endOfWeek));
+
+        int achievementRate = 0;
+        if (!weekSchedules.isEmpty()) {
+            long completedCount = weekSchedules.stream()
+                    .filter(ScheduleListResponse::getIsCompleted)
+                    .count();
+            achievementRate = (int) Math.round((double) completedCount / weekSchedules.size() * 100);
+        }
+
         model.addAttribute("groupCount", groupService.getMyGroupCount(userDetails.getUsername()));
+        model.addAttribute("todaySchedules",
+                scheduleService.getSchedulesByRange(userDetails.getUsername(), new ScheduleRangeRequest(LocalDate.now(), LocalDate.now())).stream().limit(2).toList());
+        model.addAttribute("achievementRate", achievementRate);
 
         return "/member/me";
     }
