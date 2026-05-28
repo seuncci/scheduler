@@ -16,7 +16,8 @@ public interface GroupMemberRepository extends JpaRepository<GroupMember, Long> 
 
     @Query("SELECT new com.seun.scheduler.domain.group.dto.MyGroupResponse(" +
             "g.id, g.name, g.description, g.groupImage, " +
-            "(SELECT COUNT(gm2) FROM GroupMember gm2 WHERE gm2.group = g AND gm2.status = :status)) " +
+            "(SELECT COUNT(gm2) FROM GroupMember gm2 WHERE gm2.group = g AND gm2.status = :status), " +
+            "(SELECT MAX(s.modifiedDate) FROM Schedule s WHERE s.group = g AND s.deletedDate IS NULL)) " +
             "FROM GroupMember gm JOIN gm.group g " +
             "WHERE gm.member.memberId = :memberId AND gm.status = :status AND g.status = com.seun.scheduler.domain.group.entity.GroupStatus.ACTIVE")
     Page<MyGroupResponse> findAllMemberId(@Param("memberId") String memberId, @Param("status") GroupMemberStatus status, Pageable pageable);

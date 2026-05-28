@@ -2,6 +2,7 @@ package com.seun.scheduler.domain.schedule.repository;
 
 
 import com.seun.scheduler.domain.schedule.entity.Schedule;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -22,6 +23,18 @@ public interface ScheduleRepository extends JpaRepository <Schedule, Long> {
             "AND ((s.startDateTime IS NOT NULL AND s.startDateTime <= :endDateTime AND s.endDateTime >= :startDateTime) " +
             " OR (s.startDateTime IS NULL AND s.endDateTime >= :startDateTime AND s.endDateTime <= :endDateTime))")
     List<Schedule> findGroupSchedules(@Param("memberId") String memberId, @Param("startDateTime") LocalDateTime startDateTime,  @Param("endDateTime") LocalDateTime endDateTime);
+
+    @Query("SELECT s FROM Schedule s WHERE s.group.id = :groupId AND s.deletedDate IS NULL " +
+    "AND ((s.startDateTime <= :endDateTime AND s.endDateTime >= :startDateTime) " +
+    " OR (s.startDateTime IS NULL AND s.endDateTime >= :startDateTime AND s.endDateTime <= :endDateTime)) ORDER BY s.createdDate DESC")
+    List<Schedule> findSchedulesByGroupIdAndPeriod(@Param("groupId") Long groupId,
+                                                   @Param("startDateTime") LocalDateTime startDateTime,  @Param("endDateTime") LocalDateTime endDateTime);
+
+    @Query("SELECT s FROM Schedule s WHERE s.group.id = :groupId AND s.deletedDate IS NULL " +
+            "AND ((s.startDateTime <= :endDateTime AND s.endDateTime >= :startDateTime) " +
+            " OR (s.startDateTime IS NULL AND s.endDateTime >= :startDateTime AND s.endDateTime <= :endDateTime)) ORDER BY s.createdDate DESC")
+    List<Schedule> findUpComingSchedules(@Param("groupId") Long groupId,
+                                         @Param("startDateTime") LocalDateTime startDateTime, @Param("endDateTime") LocalDateTime endDateTime, Pageable pageable);
 
     @Query("SELECT s FROM Schedule s LEFT JOIN FETCH s.group JOIN FETCH s.member WHERE s.deletedDate IS NULL AND s.id = :scheduleId")
     Optional<Schedule> findWithGroupAndMemberById(@Param("scheduleId") Long ScheduleId);

@@ -7,6 +7,10 @@ import com.seun.scheduler.domain.group.repository.GroupInvitationLinkRepository;
 import com.seun.scheduler.domain.group.repository.GroupInviteMemberRepository;
 import com.seun.scheduler.domain.member.entity.Member;
 import com.seun.scheduler.domain.member.repository.MemberRepository;
+import com.seun.scheduler.domain.schedule.dto.ScheduleListResponse;
+import com.seun.scheduler.domain.schedule.dto.ScheduleRangeRequest;
+import com.seun.scheduler.domain.schedule.entity.Schedule;
+import com.seun.scheduler.domain.schedule.repository.ScheduleRepository;
 import com.seun.scheduler.global.common.ResultCode;
 import com.seun.scheduler.global.error.CustomException;
 import com.seun.scheduler.domain.group.repository.GroupMemberRepository;
@@ -30,6 +34,8 @@ import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -43,6 +49,7 @@ public class GroupService {
     private final GroupInvitationLinkRepository groupInvitationLinkRepository;
     private final GroupInviteMemberRepository groupInviteMemberRepository;
     private final MemberRepository memberRepository;
+    private final ScheduleRepository scheduleRepository;
 
     public Page<MyGroupResponse> getMyGroupList (String memberId, Pageable pageable) {
         return groupMemberRepository.findAllMemberId(memberId, GroupMemberStatus.ACTIVE, pageable);
@@ -382,5 +389,37 @@ public class GroupService {
     public Long getMyGroupCount(String memberId) {
 
         return groupMemberRepository.countByMember_MemberIdAndGroup_Status(memberId, GroupStatus.ACTIVE);
+    }
+
+    public List<ScheduleListResponse> getGroupCalendarSchedules(String memberId, Long groupId, ScheduleRangeRequest request) {
+
+        Member member = memberRepository.findByMemberId(memberId).orElseThrow(() -> new CustomException(ResultCode.MEMBER_NOT_FOUND));
+        Group group = groupRepository.findByIdAndStatus(groupId, GroupStatus.ACTIVE).orElseThrow(() -> new CustomException(ResultCode.GROUP_NOT_FOUND));
+
+        groupMemberRepository.findByGroupAndMemberAndStatus(group, member,
+                GroupMemberStatus.ACTIVE).orElseThrow(() -> new CustomException(ResultCode.NOT_GROUP_MEMBER));
+
+        LocalDateTime startDateTime = request.getStartDate().atStartOfDay();
+        LocalDateTime endDateTime = request.getEndDate().atTime(23, 59, 59);
+
+        List<Schedule> schedules = scheduleRepository.findSchedulesByGroupIdAndPeriod(groupId, startDateTime, endDateTime);
+
+        return schedules.stream().map(ScheduleListResponse::from).toList();
+    }
+
+    public List<ScheduleListResponse> getUpcomingGroupSchedules(String memberId, Long groupId) {
+
+        Member member = memberRepository.findByMemberId(memberId).orElseThrow(() -> new CustomException(ResultCode.MEMBER_NOT_FOUND));
+        Group group = groupRepository.findByIdAndStatus(groupId, GroupStatus.ACTIVE).orElseThrow(() -> new CustomException(ResultCode.GROUP_NOT_FOUND));
+
+        groupMemberRepository.findByGroupAndMemberAndStatus(group, member,
+                GroupMemberStatus.ACTIVE).orElseThrow(() -> new CustomException(ResultCode.NOT_GROUP_MEMBER));
+
+        LocalDateTime tomorrowStart = LocalDateTime.now().plusDays(1).toLocalDate().atStartOfDay();
+        LocalDateTime weekEnd = LocalDateTime.now().plusDays(7).toLocalDate().atTime(23, 59, 59);
+
+        List<Schedule> schedules = scheduleRepository.findUpComingSchedules(groupId, tomorrowStart, weekEnd, PageRequest.of(0, 3));
+
+        return schedules.stream().map(ScheduleListResponse::from).toList();
     }
 }

@@ -4,6 +4,8 @@ import com.seun.scheduler.domain.group.dto.GroupCreateRequest;
 import com.seun.scheduler.domain.group.dto.GroupInviteRequest;
 import com.seun.scheduler.domain.group.dto.GroupUpdateRequest;
 import com.seun.scheduler.domain.group.dto.MyGroupResponse;
+import com.seun.scheduler.domain.schedule.dto.ScheduleListResponse;
+import com.seun.scheduler.domain.schedule.dto.ScheduleRangeRequest;
 import com.seun.scheduler.global.common.CommonResponse;
 import com.seun.scheduler.global.common.ResultCode;
 import com.seun.scheduler.global.error.CustomException;
@@ -122,5 +124,19 @@ public class GroupApiController {
         }
 
         return CommonResponse.result(ResultCode.GROUP_GET_SUCCESS, groups.getContent());
+    }
+
+    @GetMapping("/{groupId}/schedules")
+    public CommonResponse<List<ScheduleListResponse>> getGroupCalendarSchedules(
+            @AuthenticationPrincipal CustomUserDetails userDetails, @PathVariable("groupId") Long groupId, @ModelAttribute ScheduleRangeRequest request) {
+
+        return CommonResponse.result(ResultCode.SCHEDULE_GET_SUCCESS, groupService.getGroupCalendarSchedules(userDetails.getUsername(), groupId, request));
+    }
+
+    @GetMapping("/{groupId}/schedules/upcoming")
+    public CommonResponse<List<ScheduleListResponse>> getUpcomingGroupSchedules(
+            @AuthenticationPrincipal CustomUserDetails userDetails, @PathVariable("groupId") Long groupId) {
+
+        return CommonResponse.result(ResultCode.SCHEDULE_GET_SUCCESS, groupService.getUpcomingGroupSchedules(userDetails.getUsername(), groupId));
     }
 }
