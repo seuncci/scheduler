@@ -68,10 +68,28 @@ public enum ResultCode {
     INACTIVE_GROUP(HttpStatus.BAD_REQUEST, 4016, "삭제되거나 비활성화된 그룹의 초대입니다."),
     ALREADY_PROCESSED_INVITE(HttpStatus.BAD_REQUEST, 4017, "이미 처리된 초대장입니다."),
 
+    // 메모 관련 코드
+    MEMO_CREATE_SUCCESS(HttpStatus.CREATED, 2028, "메모가 등록되었습니다."),
+    MEMO_GET_SUCCESS(HttpStatus.OK, 2029, "메모 내역을 불러왔습니다."),
+    MEMO_UPDATE_SUCCESS(HttpStatus.OK, 2030, "메모가 수정되었습니다."),
+    MEMO_DELETE_SUCCESS(HttpStatus.OK, 2031, "메모가 삭제되었습니다."),
+
+    MEMO_CONTENT_REQUIRED(HttpStatus.BAD_REQUEST, 4036, "메모 내용을 입력해 주세요."),
+    MEMO_CATEGORY_REQUIRED(HttpStatus.BAD_REQUEST, 4037, "카테고리를 입력해 주세요."),
+    MEMO_NOT_FOUND(HttpStatus.NOT_FOUND, 4038, "존재하지 않는 메모입니다."),
+    ACCESS_DENIED_MEMO(HttpStatus.FORBIDDEN, 4039, "메모 작성자만 접근할 수 있습니다."),
+    MEMO_ALREADY_DELETED(HttpStatus.BAD_REQUEST, 4040, "이미 삭제된 메모입니다."),
+
     // 일정 관련 코드
     SCHEDULE_CREATE_SUCCESS(HttpStatus.CREATED, 2019, "일정이 등록되었습니다."),
     SCHEDULE_GET_SUCCESS(HttpStatus.OK, 2020, "일정 내역을 불러왔습니다."),
     SCHEDULE_DETAIL_SUCCESS(HttpStatus.OK, 2021, "일정 상세 정보를 조회했습니다."),
+    SCHEDULE_UPDATE_SUCCESS(HttpStatus.OK, 2022, "일정이 성공적으로 수정되었습니다."),
+    COMMENT_CREATE_SUCCESS(HttpStatus.CREATED, 2023, "댓글이 등록되었습니다."),
+    COMMENT_GET_SUCCESS(HttpStatus.OK, 2024, "댓글 목록을 불러왔습니다."),
+    COMMENT_UPDATE_SUCCESS(HttpStatus.OK, 2025, "댓글이 수정되었습니다."),
+    COMMENT_DELETE_SUCCESS(HttpStatus.OK, 2026, "댓글이 삭제되었습니다."),
+    SCHEDULE_DELETE_SUCCESS(HttpStatus.OK, 2027, "일정이 삭제되었습니다."),
 
     JOINED_GROUP_NOT_FOUND(HttpStatus.BAD_REQUEST, 4018, "가입된 그룹이 없습니다."),
     GROUP_SELECTION_REQUIRED(HttpStatus.BAD_REQUEST, 4019, "그룹을 선택해 주세요."),
@@ -82,7 +100,15 @@ public enum ResultCode {
     SCHEDULE_DATE_REQUIRED(HttpStatus.BAD_REQUEST, 4024, "날짜를 선택해 주세요."),
     SCHEDULE_TYPE_REQUIRED(HttpStatus.BAD_REQUEST, 4025, "일정 분류를 선택해 주세요."),
     SCHEDULE_NOT_FOUND(HttpStatus.NOT_FOUND, 4026, "존재하지 않는 일정입니다."),
-    ACCESS_DENIED_SCHEDULE(HttpStatus.FORBIDDEN, 4027, "해당 일정을 볼 수 있는 권한이 없습니다.");
+    ACCESS_DENIED_SCHEDULE(HttpStatus.FORBIDDEN, 4027, "일정 작성자만 접근할 수 있습니다."),
+    UNAUTHORIZED_SCHEDULE_MODIFY(HttpStatus.FORBIDDEN, 4028, "본인이 작성한 일정만 수정할 수 있습니다."),
+    LEFT_GROUP_SCHEDULE_MODIFY(HttpStatus.FORBIDDEN, 4029, "탈퇴한 그룹의 일정은 수정할 수 없습니다."),
+    COMMENT_CONTENT_REQUIRED(HttpStatus.BAD_REQUEST, 4030, "댓글 내용을 입력해 주세요."),
+    CANNOT_COMMENT_ON_PERSONAL(HttpStatus.BAD_REQUEST, 4031, "그룹 일정에만 댓글을 작성할 수 있습니다."),
+    COMMENT_NOT_FOUND_OR_DENIED(HttpStatus.NOT_FOUND, 4032, "댓글이 존재하지 않거나 권한이 없습니다."),
+    ACCESS_DENIED_COMMENT(HttpStatus.FORBIDDEN, 4033, "댓글 작성자만 접근할 수 있습니다."),
+    COMMENT_ALREADY_DELETED(HttpStatus.BAD_REQUEST, 4034, "이미 삭제된 댓글입니다."),
+    SCHEDULE_ALREADY_DELETED(HttpStatus.BAD_REQUEST, 4035, "이미 삭제된 일정입니다.");
 
     private HttpStatus status;
     private int code;
