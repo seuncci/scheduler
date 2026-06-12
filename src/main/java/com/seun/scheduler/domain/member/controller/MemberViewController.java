@@ -31,12 +31,12 @@ public class MemberViewController {
 
     @GetMapping("/login")
     public String loginPage() {
-        return "/member/login";
+        return "member/login";
     }
 
     @GetMapping("/signup")
     public String signupForm() {
-        return "/member/signup";
+        return "member/signup";
     }
 
     @GetMapping("/me")
