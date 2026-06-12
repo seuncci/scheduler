@@ -23,6 +23,6 @@ public class GroupViewController {
         model.addAttribute("group", groupService.getGroupForInvitation(code, userDetails.getUsername()));
         model.addAttribute("code", code);
 
-        return "/group/join";
+        return "group/join";
     }
 }

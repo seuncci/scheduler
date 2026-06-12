@@ -5,8 +5,9 @@
     </div>
 
     <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <a href="/" class="font-black text-xl md:text-2xl text-gray-900 tracking-tighter pointer-events-auto">
-            일정
+        <a href="/" class="font-black text-2xl md:text-3xl tracking-tight pointer-events-auto flex items-center gap-1 group select-none">
+            <span class="text-gray-900 transition-colors duration-300">Dual</span>
+            <span class="text-indigo-600 bg-indigo-50/70 px-2 py-0.5 rounded-xl border border-indigo-100/50 shadow-sm transition-all duration-300 group-hover:bg-indigo-600 group-hover:text-white group-hover:border-indigo-600">Plan</span>
         </a>
     </div>
     <div sec:authorize="isAnonymous()" class="flex-1 flex items-center justify-end md:pr-10 gap-8">

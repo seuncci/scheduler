@@ -9,6 +9,6 @@ public class ScheduleViewController {
     @GetMapping
     public String getMainSchedules() {
 
-        return "/schedule/main-schedules";
+        return "schedule/main-schedules";
     }
 }

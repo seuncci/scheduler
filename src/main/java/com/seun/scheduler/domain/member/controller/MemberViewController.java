@@ -60,7 +60,7 @@ public class MemberViewController {
                 scheduleService.getSchedulesByRange(userDetails.getUsername(), new ScheduleRangeRequest(LocalDate.now(), LocalDate.now())).stream().limit(2).toList());
         model.addAttribute("achievementRate", achievementRate);
 
-        return "/member/me";
+        return "member/me";
     }
 
     @GetMapping("/edit")
@@ -73,7 +73,7 @@ public class MemberViewController {
 
         model.addAttribute("groups", groupService.getMyGroupList(userDetails.getUsername(), pageable));
 
-        return "/member/group-list";
+        return "member/group-list";
     }
 
     @GetMapping("/me/groups/{groupId}")
@@ -82,7 +82,7 @@ public class MemberViewController {
         model.addAttribute("group", groupService.getGroup(groupId, userDetails.getUsername()));
         model.addAttribute("members", groupService.getGroupMembers(groupId, pageable));
 
-        return "/member/group-detail";
+        return "member/group-detail";
     }
 
     @GetMapping("/me/groups/{groupId}/invitation-links")
@@ -92,7 +92,7 @@ public class MemberViewController {
         model.addAttribute("group", groupService.getGroup(groupId, userDetails.getUsername()));
         model.addAttribute("links", groupService.getInvitationLinks(userDetails.getUsername(), groupId));
 
-        return "/member/group-invitation-links";
+        return "member/group-invitation-links";
     }
 
     @GetMapping("/me/groups/{groupId}/schedules")
@@ -101,6 +101,6 @@ public class MemberViewController {
 
         model.addAttribute("group", groupService.getGroup(groupId, userDetails.getUsername()));
 
-        return "/member/group-schedules";
+        return "member/group-schedules";
     }
 }
